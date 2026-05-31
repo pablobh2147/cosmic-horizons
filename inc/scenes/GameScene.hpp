@@ -11,6 +11,7 @@
 #include "Configuration.hpp"
 #include "Player.hpp"
 #include "Scene.hpp"
+#include "Starfield.hpp"
 
 namespace cosmic {
 
@@ -33,10 +34,10 @@ struct Statistics {
 class GameScene : public Scene {
    private:
     static constexpr uint32_t STARFIELD_COUNT = 1000;
-    static constexpr float MIN_TWINKLE_SPEED = 0.5F;
-    static constexpr float MAX_TWINKLE_SPEED = 3.0F;
-    static constexpr float MIN_BRIGHTNESS = 0.1F;
-    static constexpr float MAX_BRIGHTNESS = 0.5F;
+
+    static constexpr float FOV = 70.0F;
+    static constexpr float NEAR_PLANE = 0.1F;
+    static constexpr float FAR_PLANE = 100.0F;
 
    public:
     void Initialize() noexcept override;
@@ -47,7 +48,7 @@ class GameScene : public Scene {
    private:
     void DrawGUI() noexcept;
     void DrawCrosshair() noexcept;
-    void DrawStarfield() noexcept;
+    void RenderAsteroids() noexcept;
 
     void LoadAssets() noexcept;
     void UnloadAssets() noexcept;
@@ -55,20 +56,9 @@ class GameScene : public Scene {
     void ProcessPlayerMovement() noexcept;
     void CheckCollisions() noexcept;
 
-    void GenerateStarfield() noexcept;
-
     void CalculateMatrices() noexcept;
 
     void GenerateAsteroid() noexcept;
-
-   private:
-    struct Star {
-        glm::vec3 position;
-        Color color;
-        float twinkle_speed;
-        float twinkle_phase;
-        float min_brightness;
-    };
 
    private:
     Configuration m_config = {};
@@ -83,7 +73,8 @@ class GameScene : public Scene {
     glm::mat4 m_rotation;
 
     float m_animation_time = 0.0F;
-    std::vector<Star> m_starfield;
+
+    Starfield m_starfield;
 
     // Assets
     Sound m_shoot_sound;

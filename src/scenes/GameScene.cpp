@@ -15,55 +15,9 @@
 #include <span>
 
 #include "Asteroid.hpp"
+#include "Common.hpp"
 
 namespace cosmic {
-
-glm::vec3 ProjectToScreen(const glm::vec3& pos, const glm::mat4& mvp) noexcept {
-    glm::vec4 projected_pos = mvp * glm::vec4(pos, 1.0F);
-
-    float x = ((projected_pos.x / projected_pos.w) * 0.5F + 0.5F) * GetScreenWidth();
-    float y = (1.0F - ((projected_pos.y / projected_pos.w) * 0.5F + 0.5F)) * GetScreenHeight();
-
-    return glm::vec3(x, y, projected_pos.w);
-}
-
-void RenderPoint(const glm::vec3& pos, const glm::mat4& mvp, Color color) noexcept {
-    glm::vec3 screen_pos = ProjectToScreen(pos, mvp);
-    if (screen_pos.z <= 0.0F) return;
-    DrawCircle(static_cast<int>(screen_pos.x), static_cast<int>(screen_pos.y), 2, color);
-}
-
-void RenderTriangle(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, Color color) noexcept {
-    if (p0.z <= 0.0F || p1.z <= 0.0F || p2.z <= 0.0F) return;
-
-    DrawLine(static_cast<int>(p0.x), static_cast<int>(p0.y), static_cast<int>(p1.x), static_cast<int>(p1.y), color);
-    DrawLine(static_cast<int>(p1.x), static_cast<int>(p1.y), static_cast<int>(p2.x), static_cast<int>(p2.y), color);
-    DrawLine(static_cast<int>(p2.x), static_cast<int>(p2.y), static_cast<int>(p0.x), static_cast<int>(p0.y), color);
-}
-
-void RenderTriangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const glm::mat4& mvp, Color color) noexcept {
-    glm::vec3 p0 = ProjectToScreen(v0, mvp);
-    glm::vec3 p1 = ProjectToScreen(v1, mvp);
-    glm::vec3 p2 = ProjectToScreen(v2, mvp);
-
-    RenderTriangle(p0, p1, p2, color);
-}
-
-float RandomFloat(float min, float max) noexcept {
-    return min + static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX) * (max - min);
-}
-
-int32_t RandomInt(int32_t min, int32_t max) noexcept {
-    return min + std::rand() % (max - min + 1);
-}
-
-glm::vec3 RandomVector(float min, float max) {
-    return glm::vec3 {
-        RandomFloat(min, max),
-        RandomFloat(min, max),
-        RandomFloat(min, max),
-    };
-}
 
 constexpr std::array<glm::vec3, 7> triangle_vertices = {
     glm::vec3 {-1.0F, -1.0F, 0.0F},
@@ -84,7 +38,7 @@ void GameScene::Initialize() noexcept {
     };
 
     LoadAssets();
-    GenerateStarfield();
+    m_starfield.Generate(STARFIELD_COUNT);
 
     DisableCursor();
 }
@@ -113,26 +67,6 @@ void GameScene::GenerateAsteroid() noexcept {
 
     asteroid.SetVelocity(velocity_direction * RandomFloat(5.0F, 40.0F));
     asteroid.SetAngularVelocity(angular_velocity_direction * RandomFloat(0.5F, 2.0F));
-}
-
-void GameScene::GenerateStarfield() noexcept {
-    constexpr std::array<Color, 5> star_colors = {
-        Color {255, 255, 255, 255}, // White
-        Color {200, 220, 255, 255}, // Blue-white
-        Color {255, 240, 200, 255}, // Warm yellow
-        Color {255, 200, 150, 255}, // Orange
-        Color {180, 200, 255, 255}, // Cool blue
-    };
-
-    m_starfield.reserve(STARFIELD_COUNT);
-    for (uint32_t i = 0; i < STARFIELD_COUNT; ++i) {
-        Star& star = m_starfield.emplace_back();
-        star.position = RandomVector(-1.0F, 1.0F);
-        star.color = star_colors[RandomInt(0, static_cast<int32_t>(star_colors.size()) - 1)];
-        star.twinkle_speed = RandomFloat(MIN_TWINKLE_SPEED, MAX_TWINKLE_SPEED);
-        star.twinkle_phase = RandomFloat(0.0F, M_2_PIf32);
-        star.min_brightness = RandomFloat(MIN_BRIGHTNESS, MAX_BRIGHTNESS);
-    }
 }
 
 void GameScene::LoadAssets() noexcept {
@@ -238,15 +172,15 @@ void GameScene::ProcessPlayerMovement() noexcept {
     m_player.m_position += forward * mov_delta;
 
     if (IsKeyDown(m_config.input.up_key)) {
-        // m_player.m_position += up * mov_delta;
-        // glm::quat q_pitch = glm::angleAxis(rot_delta * 0.01F, right);
-        // m_player.m_orientation = glm::normalize(q_pitch * m_player.m_orientation);
+        m_player.m_position += up * mov_delta;
+        glm::quat q_pitch = glm::angleAxis(rot_delta * 0.01F, right);
+        m_player.m_orientation = glm::normalize(q_pitch * m_player.m_orientation);
     }
 
     if (IsKeyDown(m_config.input.down_key)) {
-        // m_player.m_position -= up * mov_delta;
-        // glm::quat q_pitch = glm::angleAxis(-rot_delta * 0.01F, right);
-        // m_player.m_orientation = glm::normalize(q_pitch * m_player.m_orientation);
+        m_player.m_position -= up * mov_delta;
+        glm::quat q_pitch = glm::angleAxis(-rot_delta * 0.01F, right);
+        m_player.m_orientation = glm::normalize(q_pitch * m_player.m_orientation);
     }
 
     if (IsKeyDown(m_config.input.roll_left_key)) {
@@ -267,63 +201,17 @@ void GameScene::ProcessPlayerMovement() noexcept {
     }
 }
 
-void RenderPoligon(std::span<const glm::vec3> vertices, const glm::mat4& mvp, Color color) noexcept {
-    if (vertices.size() < 3) {
-        return;
-    }
-
-    glm::vec3 v0;
-    glm::vec3 v1 = ProjectToScreen(vertices[0], mvp);
-    glm::vec3 v2 = ProjectToScreen(vertices[1], mvp);
-
-    for (size_t i = 2; i < vertices.size(); ++i) {
-        v0 = v1;
-        v1 = v2;
-        v2 = ProjectToScreen(vertices[i], mvp);
-
-        RenderTriangle(v0, v1, v2, color);
-    }
-}
-
-void RenderAsteroid(const Asteroid& asteroid, const glm::mat4& mvp, Color color) noexcept {
-    if (!asteroid.IsDestroyed()) {
-        const std::vector<glm::vec3>& vertices = asteroid.GetVertices();
-        RenderPoligon(vertices, mvp, color);
-    }
-}
-
 void GameScene::Render() noexcept {
     ClearBackground(BLACK);
 
+    CalculateMatrices();
+
+    m_starfield.Render(m_projection * m_rotation, m_animation_time);
+    RenderTriangle(triangle_vertices[0], triangle_vertices[1], triangle_vertices[2], m_projection * m_view, RED);
+    RenderAsteroids();
+
     DrawGUI();
     DrawCrosshair();
-
-    CalculateMatrices();
-    glm::mat4 view_projection = m_projection * m_view;
-
-    RenderTriangle(triangle_vertices[0], triangle_vertices[1], triangle_vertices[2], view_projection, RED);
-
-    // Render asteroids
-    Raycast player_ray = m_player.GetRaycast();
-
-    for (const Asteroid& asteroid : m_asteroids) {
-        glm::mat4 model = glm::mat4(1.0F);
-        model = glm::translate(model, asteroid.GetPosition());
-        model = glm::rotate(model, asteroid.GetRotation().x, glm::vec3(1.0F, 0.0F, 0.0F));
-        model = glm::rotate(model, asteroid.GetRotation().y, glm::vec3(0.0F, 1.0F, 0.0F));
-
-        glm::mat4 mvp = view_projection * model;
-
-        Color color = LIGHTGRAY;
-
-        if (asteroid.Cast(player_ray).hit) {
-            color = GREEN;
-        }
-
-        RenderAsteroid(asteroid, mvp, color);
-    }
-
-    DrawStarfield();
 }
 
 void GameScene::DrawGUI() noexcept {
@@ -348,31 +236,31 @@ void GameScene::DrawCrosshair() noexcept {
     DrawLine(center_x, center_y - CROSSHAIR_SIZE, center_x, center_y + CROSSHAIR_SIZE, CROSSHAIR_COLOR);
 }
 
-void GameScene::DrawStarfield() noexcept {
-    for (const Star& star : m_starfield) {
-        glm::vec3 screen_pos = ProjectToScreen(star.position, m_projection * m_rotation);
-        if (screen_pos.z <= 0.0F) continue;
+void GameScene::RenderAsteroids() noexcept {
+    Raycast player_ray = m_player.GetRaycast();
+    glm::mat4 view_projection = m_projection * m_view;
 
-        float t = std::sin(m_animation_time * star.twinkle_speed + star.twinkle_phase);
-        float brightness = star.min_brightness + (1.0F - star.min_brightness) * (t * 0.5F + 0.5F);
+    for (const Asteroid& asteroid : m_asteroids) {
+        glm::mat4 model = glm::mat4(1.0F);
+        model = glm::translate(model, asteroid.GetPosition());
+        model = glm::rotate(model, asteroid.GetRotation().x, glm::vec3(1.0F, 0.0F, 0.0F));
+        model = glm::rotate(model, asteroid.GetRotation().y, glm::vec3(0.0F, 1.0F, 0.0F));
 
-        Color color = {
-            static_cast<unsigned char>(star.color.r * brightness),
-            static_cast<unsigned char>(star.color.g * brightness),
-            static_cast<unsigned char>(star.color.b * brightness),
-            255,
-        };
+        glm::mat4 mvp = view_projection * model;
 
-        float radius = 0.5F + brightness * 1.0F;
-        DrawCircle(static_cast<int>(screen_pos.x), static_cast<int>(screen_pos.y), radius, color);
+        Color color = LIGHTGRAY;
+
+        if (asteroid.Cast(player_ray).hit) {
+            color = GREEN;
+        }
+
+        if (!asteroid.IsDestroyed()) {
+            RenderPoligon(asteroid.GetVertices(), mvp, color);
+        }
     }
 }
 
 void GameScene::CalculateMatrices() noexcept {
-    constexpr float FOV = 70.0F;
-    constexpr float NEAR_PLANE = 0.1F;
-    constexpr float FAR_PLANE = 100.0F;
-
     float aspect_ratio = static_cast<float>(GetScreenWidth()) / static_cast<float>(GetScreenHeight());
     m_projection = glm::perspective(glm::radians(FOV), aspect_ratio, NEAR_PLANE, FAR_PLANE);
 
