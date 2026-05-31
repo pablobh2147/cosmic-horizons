@@ -5,9 +5,12 @@
 namespace cosmic {
 
 bool Application::Initialize() noexcept {
+    m_running = true;
+
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Cosmic Horizons");
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WINDOW_TITLE);
     SetTargetFPS(TARGET_FPS);
+    SetExitKey(KEY_NULL);
 
     InitAudioDevice();
 
@@ -15,15 +18,19 @@ bool Application::Initialize() noexcept {
 }
 
 void Application::Run() noexcept {
-    while (!WindowShouldClose()) {
+    while (!WindowShouldClose() && m_running) {
+        ProcessSceneTransition();
         Update();
         Render();
     }
 }
 
-void Application::Shutdown() noexcept {
+void Application::Destroy() noexcept {
+    m_running = false;
+
     if (m_active_scene != nullptr) {
         m_active_scene->Shutdown();
+        m_active_scene = nullptr;
     }
 
     CloseAudioDevice();
@@ -48,6 +55,18 @@ void Application::Render() noexcept {
     }
 
     EndDrawing();
+}
+
+void Application::ProcessSceneTransition() noexcept {
+    if (m_next_scene != nullptr) {
+        if (m_active_scene != nullptr) {
+            m_active_scene->Shutdown();
+        }
+
+        m_active_scene = std::move(m_next_scene);
+        m_active_scene->SetApplication(this);
+        m_active_scene->Initialize();
+    }
 }
 
 }  // namespace cosmic

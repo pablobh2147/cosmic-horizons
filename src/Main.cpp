@@ -1,14 +1,13 @@
 #include "Application.hpp"
-#include "scenes/GameScene.hpp"
-#include "scenes/MenuScene.hpp"
+#include "scenes/MainMenuScene.hpp"
 
 int main() {
     cosmic::Application app;
 
     app.Initialize();
-    app.SetActiveScene<cosmic::GameScene>();
+    app.TransitionScene<cosmic::MainMenuScene>();
     app.Run();
-    app.Shutdown();
+    app.Destroy();
 
     return 0;
 }

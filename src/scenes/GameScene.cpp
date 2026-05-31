@@ -14,8 +14,10 @@
 #include <limits>
 #include <span>
 
+#include "Application.hpp"
 #include "Asteroid.hpp"
 #include "Common.hpp"
+#include "scenes/GameoverScene.hpp"
 
 namespace cosmic {
 
@@ -130,6 +132,11 @@ void GameScene::CheckCollisions() noexcept {
     for (auto it = m_asteroids.begin(); it != m_asteroids.end(); ++it) {
         if (it->CollidesWith(m_player)) {
             m_player.health -= 10;
+
+            if (m_player.health <= 0) {
+                GetApplication()->TransitionScene<GameoverScene>();
+                return;
+            }
 
             it = m_asteroids.erase(it);
             if (it == m_asteroids.end()) {

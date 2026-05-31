@@ -4,8 +4,11 @@
 
 namespace cosmic {
 
-class MenuScene : public Scene {
+class GameoverScene : public Scene {
    public:
+    GameoverScene() = default;
+    ~GameoverScene() = default;
+
     void Initialize() noexcept override;
     void Update() noexcept override;
     void Render() noexcept override;
