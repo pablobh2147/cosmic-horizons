@@ -30,8 +30,6 @@ constexpr std::array<glm::vec3, 7> triangle_vertices = {
 };
 
 void GameScene::Initialize() noexcept {
-    constexpr float BOUNDS_SIZE = 80.0F;
-
     m_bounds = {
         .min = {-BOUNDS_SIZE, -BOUNDS_SIZE, -BOUNDS_SIZE},
         .max = {BOUNDS_SIZE,  BOUNDS_SIZE,  BOUNDS_SIZE },
@@ -59,7 +57,7 @@ void GameScene::GenerateAsteroid() noexcept {
     asteroid.SetLives(lives);
     asteroid.GenerateVertices(vertex_count);
 
-    asteroid.SetPosition(RandomVector(-10.0F, 10.0F));
+    asteroid.SetPosition(RandomVector(-BOUNDS_SIZE * 0.8F, BOUNDS_SIZE * 0.8F));
     asteroid.SetRotation(RandomVector(0.0F, M_2_PIf32));
 
     glm::vec3 velocity_direction = glm::normalize(RandomVector(-1.0F, 1.0F));
@@ -139,7 +137,6 @@ void GameScene::CheckCollisions() noexcept {
             }
 
             PlaySound(m_destroy_sound);
-            continue;
         }
     }
 
@@ -156,14 +153,15 @@ void GameScene::CheckCollisions() noexcept {
 
 void GameScene::ProcessPlayerMovement() noexcept {
     float mov_delta = m_player.speed * GetFrameTime();
-    float rot_delta = m_player.rotation_speed * GetFrameTime();
+    float rot_delta = 120.0F * GetFrameTime();
+    float roll_delta = 0.5F * GetFrameTime();
 
     glm::vec3 forward = m_player.GetForward();
     glm::vec3 right = m_player.GetRight();
     glm::vec3 up = m_player.GetUp();
 
-    float yaw_angle = -(GetMouseDelta().x / GetScreenWidth()) * rot_delta;
-    float pitch_angle = -(GetMouseDelta().y / GetScreenHeight()) * rot_delta;
+    float yaw_angle = -(GetMouseDelta().x / GetScreenWidth()) * rot_delta * M_2_PIf32;
+    float pitch_angle = -(GetMouseDelta().y / GetScreenHeight()) * rot_delta * M_2_PIf32;
 
     glm::quat q_yaw = glm::angleAxis(yaw_angle, up);
     glm::quat q_pitch = glm::angleAxis(pitch_angle, right);
@@ -173,25 +171,25 @@ void GameScene::ProcessPlayerMovement() noexcept {
 
     if (IsKeyDown(m_config.input.up_key)) {
         m_player.m_position += up * mov_delta;
-        glm::quat q_pitch = glm::angleAxis(rot_delta * 0.01F, right);
+        glm::quat q_pitch = glm::angleAxis(roll_delta, right);
         m_player.m_orientation = glm::normalize(q_pitch * m_player.m_orientation);
     }
 
     if (IsKeyDown(m_config.input.down_key)) {
         m_player.m_position -= up * mov_delta;
-        glm::quat q_pitch = glm::angleAxis(-rot_delta * 0.01F, right);
+        glm::quat q_pitch = glm::angleAxis(-roll_delta, right);
         m_player.m_orientation = glm::normalize(q_pitch * m_player.m_orientation);
     }
 
     if (IsKeyDown(m_config.input.roll_left_key)) {
         m_player.m_position -= right * mov_delta;
-        glm::quat q_roll = glm::angleAxis(-rot_delta * 0.01F, forward);
+        glm::quat q_roll = glm::angleAxis(-roll_delta, forward);
         m_player.m_orientation = glm::normalize(q_roll * m_player.m_orientation);
     }
 
     if (IsKeyDown(m_config.input.roll_right_key)) {
         m_player.m_position += right * mov_delta;
-        glm::quat q_roll = glm::angleAxis(rot_delta * 0.01F, forward);
+        glm::quat q_roll = glm::angleAxis(roll_delta, forward);
         m_player.m_orientation = glm::normalize(q_roll * m_player.m_orientation);
     }
 

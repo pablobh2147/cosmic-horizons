@@ -39,8 +39,7 @@ void Starfield::Render(const glm::mat4& mvp, float animation_time) noexcept {
             255,
         };
 
-        float radius = 0.5F + brightness * 1.0F;
-        DrawCircle(static_cast<int>(screen_pos.x), static_cast<int>(screen_pos.y), radius, color);
+        DrawCircle(static_cast<int>(screen_pos.x), static_cast<int>(screen_pos.y), 1.0F, color);
     }
 }
 

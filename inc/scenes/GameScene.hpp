@@ -39,6 +39,8 @@ class GameScene : public Scene {
     static constexpr float NEAR_PLANE = 0.1F;
     static constexpr float FAR_PLANE = 100.0F;
 
+    static constexpr float BOUNDS_SIZE = 80.0F;
+
    public:
     void Initialize() noexcept override;
     void Update() noexcept override;

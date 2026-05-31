@@ -20,7 +20,6 @@ class Player {
     glm::quat m_orientation = glm::quat(1.0F, 0.0F, 0.0F, 0.0F);
 
     float speed = 20.0F;
-    float rotation_speed = 120.0F;
 
     int32_t health = 100;
 
