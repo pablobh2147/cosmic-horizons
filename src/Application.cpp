@@ -10,7 +10,7 @@ bool Application::Initialize() noexcept {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WINDOW_TITLE);
     SetTargetFPS(TARGET_FPS);
-    SetExitKey(KEY_NULL);
+    // SetExitKey(KEY_NULL);
 
     InitAudioDevice();
 

@@ -6,10 +6,7 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
-#include <algorithm>
-#include <array>
 #include <cmath>
-#include <cstddef>
 #include <format>
 #include <limits>
 #include <span>
@@ -20,16 +17,6 @@
 #include "scenes/GameoverScene.hpp"
 
 namespace cosmic {
-
-constexpr std::array<glm::vec3, 7> triangle_vertices = {
-    glm::vec3 {-1.0F, -1.0F, 0.0F},
-    glm::vec3 {1.0F,  -1.0F, 0.0F},
-    glm::vec3 {0.0F,  1.0F,  0.0F},
-    glm::vec3 {-1.0F, 1.0F,  0.0F},
-    glm::vec3 {1.0F,  1.0F,  0.0F},
-    glm::vec3 {-0.5F, -0.5F, 1.0F},
-    glm::vec3 {0.5F,  -0.5F, 1.0F},
-};
 
 void GameScene::Initialize() noexcept {
     m_bounds = {
@@ -72,52 +59,28 @@ void GameScene::GenerateAsteroid() noexcept {
 void GameScene::LoadAssets() noexcept {
     m_shoot_sound = LoadSound("assets/sounds/shoot.mp3");
     m_destroy_sound = LoadSound("assets/sounds/destroy.mp3");
+
+    Image img = LoadImage("assets/textures/spaceship.png");
+    m_spaceship_tex = LoadTextureFromImage(img);
+    UnloadImage(img);
 }
 
 void GameScene::UnloadAssets() noexcept {
     UnloadSound(m_shoot_sound);
     UnloadSound(m_destroy_sound);
+
+    UnloadTexture(m_spaceship_tex);
 }
 
 void GameScene::Update() noexcept {
     ProcessPlayerMovement();
+    ProcessPlayerAttack();
 
     if (IsKeyPressed(KEY_R)) {
         GenerateAsteroid();
     }
 
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-        m_statistics.shots_fired++;
-        PlaySound(m_shoot_sound);
-
-        Raycast ray = m_player.GetRaycast();
-        float closest_distance = std::numeric_limits<float>::max();
-        Asteroid* hit_asteroid = nullptr;
-
-        for (Asteroid& asteroid : m_asteroids) {
-            RaycastResult result = asteroid.Cast(ray);
-            if (result.hit && result.distance < closest_distance) {
-                closest_distance = result.distance;
-                hit_asteroid = &asteroid;
-            }
-        }
-
-        if (hit_asteroid != nullptr) {
-            hit_asteroid->Attack();
-            m_statistics.score += 10;
-
-            if (hit_asteroid->IsDestroyed()) {
-                m_statistics.asteroids_destroyed++;
-                m_statistics.score += 100;
-                PlaySound(m_destroy_sound);
-            }
-        } else {
-            m_statistics.misses++;
-        }
-    }
-
-    m_animation_time += GetFrameTime();
-
+    // Update asteroids
     for (Asteroid& asteroid : m_asteroids) {
         asteroid.Update(GetFrameTime());
     }
@@ -131,9 +94,9 @@ void GameScene::Update() noexcept {
 void GameScene::CheckCollisions() noexcept {
     for (auto it = m_asteroids.begin(); it != m_asteroids.end(); ++it) {
         if (it->CollidesWith(m_player)) {
-            m_player.health -= 10;
+            m_player.lives -= 1;
 
-            if (m_player.health <= 0) {
+            if (m_player.lives <= 0) {
                 GetApplication()->TransitionScene<GameoverScene>();
                 return;
             }
@@ -147,21 +110,21 @@ void GameScene::CheckCollisions() noexcept {
         }
     }
 
-    for (size_t i = 0; i < m_asteroids.size(); ++i) {
-        for (size_t j = i + 1; j < m_asteroids.size(); ++j) {
-            if (m_asteroids[i].CollidesWith(m_asteroids[j])) {
-                m_asteroids[i].ResolveCollision(m_asteroids[j]);
+    for (auto it = m_asteroids.begin(); it != m_asteroids.end(); ++it) {
+        for (auto jt = it + 1; jt != m_asteroids.end(); ++jt) {
+            if (it->CollidesWith(*jt)) {
+                it->ResolveCollision(*jt);
             }
         }
 
-        m_asteroids[i].ResolveBoundsCollision(m_bounds);
+        it->ResolveBoundsCollision(m_bounds);
     }
 }
 
 void GameScene::ProcessPlayerMovement() noexcept {
     float mov_delta = m_player.speed * GetFrameTime();
     float rot_delta = 120.0F * GetFrameTime();
-    float roll_delta = 0.5F * GetFrameTime();
+    float roll_delta = 2.0F * GetFrameTime();
 
     glm::vec3 forward = m_player.GetForward();
     glm::vec3 right = m_player.GetRight();
@@ -199,10 +162,37 @@ void GameScene::ProcessPlayerMovement() noexcept {
         glm::quat q_roll = glm::angleAxis(roll_delta, forward);
         m_player.m_orientation = glm::normalize(q_roll * m_player.m_orientation);
     }
+}
 
-    float wheel_move = GetMouseWheelMove();
-    if (wheel_move != 0.0F) {
-        m_player.speed = std::clamp(m_player.speed + wheel_move, Player::MIN_SPEED, Player::MAX_SPEED);
+void GameScene::ProcessPlayerAttack() noexcept {
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        m_statistics.shots_fired++;
+        PlaySound(m_shoot_sound);
+
+        Raycast ray = GetAimRay();
+        float closest_distance = std::numeric_limits<float>::max();
+        Asteroid* hit_asteroid = nullptr;
+
+        for (Asteroid& asteroid : m_asteroids) {
+            RaycastResult result = asteroid.Cast(ray);
+            if (result.hit && result.distance < closest_distance) {
+                closest_distance = result.distance;
+                hit_asteroid = &asteroid;
+            }
+        }
+
+        if (hit_asteroid != nullptr) {
+            hit_asteroid->Attack();
+            m_statistics.score += 10;
+
+            if (hit_asteroid->IsDestroyed()) {
+                m_statistics.asteroids_destroyed++;
+                m_statistics.score += 100;
+                PlaySound(m_destroy_sound);
+            }
+        } else {
+            m_statistics.misses++;
+        }
     }
 }
 
@@ -210,9 +200,9 @@ void GameScene::Render() noexcept {
     ClearBackground(BLACK);
 
     CalculateMatrices();
+    m_animation_time += GetFrameTime();
 
     m_starfield.Render(m_projection * m_rotation, m_animation_time);
-    RenderTriangle(triangle_vertices[0], triangle_vertices[1], triangle_vertices[2], m_projection * m_view, RED);
     RenderAsteroids();
 
     DrawGUI();
@@ -221,13 +211,29 @@ void GameScene::Render() noexcept {
 
 void GameScene::DrawGUI() noexcept {
     DrawFPS(10, 10);
-    DrawText("Cosmic Horizons", GetScreenWidth() / 2 - MeasureText("Cosmic Horizons", 50) / 2, 30, 50, WHITE);
-    DrawText(std::format("Asteroids Destroyed: {}", m_statistics.asteroids_destroyed).c_str(), 10, 50, 20, WHITE);
-    DrawText(std::format("Score: {}", m_statistics.score).c_str(), 10, 70, 20, WHITE);
-    DrawText(std::format("Level: {}", m_statistics.level).c_str(), 10, 90, 20, WHITE);
-    DrawText(std::format("Accuracy: {:.1f}%", m_statistics.GetAccuracy() * 100.0F).c_str(), 10, 110, 20, WHITE);
-    DrawText(std::format("Health: {}", m_player.health).c_str(), 10, 130, 20, RED);
-    DrawText(std::format("Shots Fired: {}", m_statistics.shots_fired).c_str(), 10, 150, 20, WHITE);
+
+    std::string score_str = std::format("Score: {}", m_statistics.score);
+    std::string level_str = std::format("Level: {}", m_statistics.level);
+
+    constexpr uint32_t FONT_SIZE = 50;
+
+    DrawText(score_str.c_str(), GetScreenWidth() / 4 - MeasureText(score_str.c_str(), FONT_SIZE) / 2, 30, FONT_SIZE, WHITE);
+    DrawText(level_str.c_str(), GetScreenWidth() * 3 / 4 - MeasureText(level_str.c_str(), FONT_SIZE) / 2, 30, FONT_SIZE, WHITE);
+
+    DrawText(std::format("Accuracy: {:.1f}%", m_statistics.GetAccuracy() * 100.0F).c_str(), 10, 70, 20, WHITE);
+
+    // Draw lives as spaceship sprites
+    for (int i = 0; i < m_player.lives; ++i) {
+        constexpr int32_t TEXTURE_SCALE = 4;
+
+        int32_t offset_x = m_spaceship_tex.width * TEXTURE_SCALE / 2;
+        int32_t offset_y = m_spaceship_tex.height * TEXTURE_SCALE / 2;
+
+        int32_t x = 50 + i * (m_spaceship_tex.width * TEXTURE_SCALE + 10);
+        int32_t y = GetScreenHeight() - 50;
+
+        DrawTextureEx(m_spaceship_tex, {static_cast<float>(x - offset_x), static_cast<float>(y - offset_y)}, 0.0F, TEXTURE_SCALE, WHITE);
+    }
 }
 
 void GameScene::DrawCrosshair() noexcept {
@@ -242,7 +248,7 @@ void GameScene::DrawCrosshair() noexcept {
 }
 
 void GameScene::RenderAsteroids() noexcept {
-    Raycast player_ray = m_player.GetRaycast();
+    Raycast player_ray = GetAimRay();
     glm::mat4 view_projection = m_projection * m_view;
 
     for (const Asteroid& asteroid : m_asteroids) {
@@ -271,6 +277,10 @@ void GameScene::CalculateMatrices() noexcept {
 
     m_rotation = glm::mat4_cast(glm::conjugate(m_player.m_orientation));
     m_view = m_rotation * glm::translate(glm::mat4(1.0F), -m_player.m_position);
+}
+
+Raycast GameScene::GetAimRay() noexcept {
+    return m_player.GetRaycast();
 }
 
 }  // namespace cosmic

@@ -102,7 +102,6 @@ void MainMenuScene::Render() noexcept {
     DrawText(hint, (screen_w - hint_width) / 2, screen_h - 50, HINT_SIZE, DARKGRAY);
 }
 
-void MainMenuScene::Shutdown() noexcept {
-}
+void MainMenuScene::Shutdown() noexcept {}
 
 }  // namespace cosmic

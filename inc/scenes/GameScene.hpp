@@ -10,6 +10,7 @@
 #include "Asteroid.hpp"
 #include "Configuration.hpp"
 #include "Player.hpp"
+#include "Raycast.hpp"
 #include "Scene.hpp"
 #include "Starfield.hpp"
 
@@ -56,9 +57,12 @@ class GameScene : public Scene {
     void UnloadAssets() noexcept;
 
     void ProcessPlayerMovement() noexcept;
+    void ProcessPlayerAttack() noexcept;
+
     void CheckCollisions() noexcept;
 
     void CalculateMatrices() noexcept;
+    Raycast GetAimRay() noexcept;
 
     void GenerateAsteroid() noexcept;
 
@@ -69,6 +73,8 @@ class GameScene : public Scene {
     std::vector<Asteroid> m_asteroids;
     Statistics m_statistics;
     BoundingBox m_bounds;
+
+    glm::vec2 m_aim;
 
     glm::mat4 m_projection;
     glm::mat4 m_view;
@@ -81,6 +87,8 @@ class GameScene : public Scene {
     // Assets
     Sound m_shoot_sound;
     Sound m_destroy_sound;
+
+    Texture2D m_spaceship_tex;
 };
 
 }  // namespace cosmic

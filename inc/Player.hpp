@@ -21,7 +21,7 @@ class Player {
 
     float speed = 20.0F;
 
-    int32_t health = 100;
+    int32_t lives = 3;
 
    public:
     glm::vec3 GetForward() const {
