@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 
 #include "Scene.hpp"
@@ -8,15 +9,28 @@
 namespace cosmic {
 
 class MainMenuScene : public Scene {
+   private:
+    static constexpr std::array<const char*, 2> MENU_OPTIONS = {"Play", "Quit"};
+
    public:
     void Initialize() noexcept override;
+    void Shutdown() noexcept override;
     void Update() noexcept override;
     void Render() noexcept override;
-    void Shutdown() noexcept override;
+
+   private:
+    void RenderBackground() noexcept;
+
+    void DrawTitle() noexcept;
+    void DrawMenu() noexcept;
+    void DrawHint() noexcept;
+
+    void MoveSelectionUp() noexcept;
+    void MoveSelectionDown() noexcept;
+    void ExecuteSelection() noexcept;
 
    private:
     int32_t m_selected_option = 0;
-    static constexpr int32_t MENU_OPTION_COUNT = 2;
 
     Starfield m_starfield;
     float m_animation_time = 0.0F;
