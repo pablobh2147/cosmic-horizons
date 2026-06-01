@@ -37,8 +37,6 @@ class Application {
     void Update() noexcept;
     void Render() noexcept;
     void ProcessSceneTransition() noexcept;
-
-    friend int main();
 };
 
 }  // namespace cosmic
