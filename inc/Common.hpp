@@ -24,6 +24,6 @@ void RenderPoligon(std::span<const glm::vec3> vertices, const glm::mat4& mvp, Co
 
 // Drawing functions
 
-void DrawTextCentered(const char* text, int x_offset, int y_offset, int font_size, Color color) noexcept;
+void DrawTextCentered(const char* text, int x, int y, int font_size, Color color) noexcept;
 
 }  // namespace cosmic

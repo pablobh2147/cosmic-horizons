@@ -27,8 +27,8 @@ void GameoverScene::Render() noexcept {
     constexpr uint32_t CONTINUE_TEXT_SIZE = 20;
     constexpr uint32_t VERTICAL_SPACING = 20;
 
-    DrawTextCentered("GAME OVER", 0, 0, GAMEOVER_TEXT_SIZE, RED);
-    DrawTextCentered("Press Space to continue", 0, GAMEOVER_TEXT_SIZE + VERTICAL_SPACING, CONTINUE_TEXT_SIZE, LIGHTGRAY);
+    DrawTextCentered("GAME OVER", GetScreenWidth() / 2, GetScreenHeight() / 2 - VERTICAL_SPACING, GAMEOVER_TEXT_SIZE, RED);
+    DrawTextCentered("Press Space to continue", GetScreenWidth() / 2, GetScreenHeight() / 2 + VERTICAL_SPACING, CONTINUE_TEXT_SIZE, LIGHTGRAY);
 }
 
 }  // namespace cosmic

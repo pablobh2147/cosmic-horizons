@@ -71,9 +71,9 @@ void RenderPoligon(std::span<const glm::vec3> vertices, const glm::mat4& mvp, Co
 
 // Drawing functions
 
-void DrawTextCentered(const char* text, int x_offset, int y_offset, int font_size, Color color) noexcept {
+void DrawTextCentered(const char* text, int x, int y, int font_size, Color color) noexcept {
     int text_width = MeasureText(text, font_size);
-    DrawText(text, (GetScreenWidth() - text_width) / 2 + x_offset, (GetScreenHeight() - font_size) / 2 + y_offset, font_size, color);
+    DrawText(text, x - text_width / 2, y - font_size / 2, font_size, color);
 }
 
 }  // namespace cosmic
