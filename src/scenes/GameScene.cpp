@@ -70,12 +70,12 @@ void GameScene::Render() noexcept {
 void GameScene::DrawGUI() noexcept {
     DrawFPS(10, 10);
 
+    constexpr uint32_t FONT_SIZE = 50;
+
     std::string score_str = std::format("Score: {}", m_statistics.score);
     std::string level_str = std::format("Level: {}", m_statistics.level);
 
-    constexpr uint32_t FONT_SIZE = 50;
-
-    DrawText(score_str.c_str(), GetScreenWidth() / 4 - MeasureText(score_str.c_str(), FONT_SIZE) / 2, 30, FONT_SIZE, WHITE);
+    DrawText(score_str.c_str(), GetScreenWidth() * 1 / 4 - MeasureText(score_str.c_str(), FONT_SIZE) / 2, 30, FONT_SIZE, WHITE);
     DrawText(level_str.c_str(), GetScreenWidth() * 3 / 4 - MeasureText(level_str.c_str(), FONT_SIZE) / 2, 30, FONT_SIZE, WHITE);
 
     DrawText(std::format("Accuracy: {:.1f}%", m_statistics.GetAccuracy() * 100.0F).c_str(), 10, 70, 20, WHITE);
@@ -154,9 +154,12 @@ void GameScene::UnloadAssets() noexcept {
 // ----------------------- Player Input -----------------------
 
 void GameScene::ProcessPlayerMovement() noexcept {
+    constexpr float ROTATION_SPEED = 120.0F;
+    constexpr float ROLL_SPEED = 2.0F;
+
     float mov_delta = m_player.speed * GetFrameTime();
-    float rot_delta = 120.0F * GetFrameTime();
-    float roll_delta = 2.0F * GetFrameTime();
+    float rot_delta = ROTATION_SPEED * GetFrameTime();
+    float roll_delta = ROLL_SPEED * GetFrameTime();
 
     glm::vec3 forward = m_player.GetForward();
     glm::vec3 right = m_player.GetRight();
@@ -270,10 +273,22 @@ Asteroid* GameScene::GetClosestHitAsteroid(const Raycast& ray) noexcept {
 // ----------------------- Generation -----------------------
 
 void GameScene::GenerateAsteroid() noexcept {
+    constexpr float MIN_RADIUS = 1.0F;
+    constexpr float MAX_RADIUS = 12.0F;
+
+    constexpr float LIVES_PER_RADIUS = 0.5F;
+    constexpr uint32_t VERTEX_COUNT_PER_RADIUS = 5;
+    constexpr uint32_t MIN_VERTEX_COUNT = 10;
+
+    constexpr float MIN_VELOCITY = 5.0F;
+    constexpr float MAX_VELOCITY = 40.0F;
+    constexpr float MIN_ANGULAR_VELOCITY = 0.5F;
+    constexpr float MAX_ANGULAR_VELOCITY = 2.0F;
+
     Asteroid& asteroid = m_asteroids.emplace_back();
-    float base_radius = RandomFloat(1.0F, 12.0F);
-    uint32_t lives = static_cast<uint32_t>(base_radius * 0.5F) + 1;
-    uint32_t vertex_count = static_cast<uint32_t>(base_radius * 5.0F) + 10;
+    float base_radius = RandomFloat(MIN_RADIUS, MAX_RADIUS);
+    uint32_t lives = static_cast<uint32_t>(base_radius * LIVES_PER_RADIUS) + 1;
+    uint32_t vertex_count = static_cast<uint32_t>(base_radius * VERTEX_COUNT_PER_RADIUS) + MIN_VERTEX_COUNT;
 
     asteroid.SetRadius(base_radius);
     asteroid.SetLives(lives);
@@ -285,8 +300,8 @@ void GameScene::GenerateAsteroid() noexcept {
     glm::vec3 velocity_direction = glm::normalize(RandomVector(-1.0F, 1.0F));
     glm::vec3 angular_velocity_direction = glm::normalize(RandomVector(-1.0F, 1.0F));
 
-    asteroid.SetVelocity(velocity_direction * RandomFloat(5.0F, 40.0F));
-    asteroid.SetAngularVelocity(angular_velocity_direction * RandomFloat(0.5F, 2.0F));
+    asteroid.SetVelocity(velocity_direction * RandomFloat(MIN_VELOCITY, MAX_VELOCITY));
+    asteroid.SetAngularVelocity(angular_velocity_direction * RandomFloat(MIN_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY));
 }
 
 }  // namespace cosmic

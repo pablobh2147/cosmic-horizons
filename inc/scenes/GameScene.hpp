@@ -69,12 +69,15 @@ class GameScene : public Scene {
     void GenerateAsteroid() noexcept;
 
    private:
+    // ------ Configuration ------
     Configuration m_config = {};
 
+    // ------ Game Objects ------
+    Statistics m_statistics = {};
     Player m_player;
     std::vector<Asteroid> m_asteroids;
-    Statistics m_statistics;
 
+    // ------ Graphics ------
     glm::mat4 m_projection;
     glm::mat4 m_view;
     glm::mat4 m_rotation;
@@ -82,7 +85,7 @@ class GameScene : public Scene {
     float m_animation_time = 0.0F;
     Starfield m_starfield;
 
-    // Assets
+    // ------ Assets ------
     Sound m_shoot_sound;
     Sound m_destroy_sound;
 
