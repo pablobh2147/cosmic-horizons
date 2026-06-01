@@ -6,7 +6,7 @@
 
 namespace cosmic {
 
-// Random
+// Random number generation
 
 float RandomFloat(float min, float max) noexcept {
     return min + static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX) * (max - min);
@@ -24,7 +24,7 @@ glm::vec3 RandomVector(float min, float max) noexcept {
     };
 }
 
-// Rendering
+// Rendering functions
 
 glm::vec3 ProjectToScreen(const glm::vec3& pos, const glm::mat4& mvp) noexcept {
     glm::vec4 projected_pos = mvp * glm::vec4(pos, 1.0F);
@@ -67,6 +67,13 @@ void RenderPoligon(std::span<const glm::vec3> vertices, const glm::mat4& mvp, Co
 
         RenderTriangle(v0, v1, v2, color);
     }
+}
+
+// Drawing functions
+
+void DrawTextCentered(const char* text, int x_offset, int y_offset, int font_size, Color color) noexcept {
+    int text_width = MeasureText(text, font_size);
+    DrawText(text, (GetScreenWidth() - text_width) / 2 + x_offset, (GetScreenHeight() - font_size) / 2 + y_offset, font_size, color);
 }
 
 }  // namespace cosmic
