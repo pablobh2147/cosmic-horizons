@@ -18,6 +18,8 @@
 
 namespace cosmic {
 
+// ----------------------- Scene Methods -----------------------
+
 void GameScene::Initialize() noexcept {
     m_bounds = {
         .min = {-BOUNDS_SIZE, -BOUNDS_SIZE, -BOUNDS_SIZE},
@@ -34,42 +36,6 @@ void GameScene::Shutdown() noexcept {
     UnloadAssets();
 
     EnableCursor();
-}
-
-void GameScene::GenerateAsteroid() noexcept {
-    Asteroid& asteroid = m_asteroids.emplace_back();
-    float base_radius = RandomFloat(1.0F, 12.0F);
-    uint32_t lives = static_cast<uint32_t>(base_radius * 0.5F) + 1;
-    uint32_t vertex_count = static_cast<uint32_t>(base_radius * 5.0F) + 10;
-
-    asteroid.SetRadius(base_radius);
-    asteroid.SetLives(lives);
-    asteroid.GenerateVertices(vertex_count);
-
-    asteroid.SetPosition(RandomVector(-BOUNDS_SIZE * 0.8F, BOUNDS_SIZE * 0.8F));
-    asteroid.SetRotation(RandomVector(0.0F, M_2_PIf32));
-
-    glm::vec3 velocity_direction = glm::normalize(RandomVector(-1.0F, 1.0F));
-    glm::vec3 angular_velocity_direction = glm::normalize(RandomVector(-1.0F, 1.0F));
-
-    asteroid.SetVelocity(velocity_direction * RandomFloat(5.0F, 40.0F));
-    asteroid.SetAngularVelocity(angular_velocity_direction * RandomFloat(0.5F, 2.0F));
-}
-
-void GameScene::LoadAssets() noexcept {
-    m_shoot_sound = LoadSound("assets/sounds/shoot.mp3");
-    m_destroy_sound = LoadSound("assets/sounds/destroy.mp3");
-
-    Image img = LoadImage("assets/textures/spaceship.png");
-    m_spaceship_tex = LoadTextureFromImage(img);
-    UnloadImage(img);
-}
-
-void GameScene::UnloadAssets() noexcept {
-    UnloadSound(m_shoot_sound);
-    UnloadSound(m_destroy_sound);
-
-    UnloadTexture(m_spaceship_tex);
 }
 
 void GameScene::Update() noexcept {
@@ -91,35 +57,110 @@ void GameScene::Update() noexcept {
     CheckCollisions();
 }
 
-void GameScene::CheckCollisions() noexcept {
-    for (auto it = m_asteroids.begin(); it != m_asteroids.end(); ++it) {
-        if (it->CollidesWith(m_player)) {
-            m_player.lives -= 1;
+void GameScene::Render() noexcept {
+    ClearBackground(BLACK);
 
-            if (m_player.lives <= 0) {
-                GetApplication()->TransitionScene<GameoverScene>();
-                return;
-            }
+    CalculateMatrices();
+    m_animation_time += GetFrameTime();
 
-            it = m_asteroids.erase(it);
-            if (it == m_asteroids.end()) {
-                break;
-            }
+    m_starfield.Render(m_projection * m_rotation, m_animation_time);
+    RenderAsteroids();
 
-            PlaySound(m_destroy_sound);
-        }
-    }
+    DrawGUI();
+    DrawCrosshair();
+}
 
-    for (auto it = m_asteroids.begin(); it != m_asteroids.end(); ++it) {
-        for (auto jt = it + 1; jt != m_asteroids.end(); ++jt) {
-            if (it->CollidesWith(*jt)) {
-                it->ResolveCollision(*jt);
-            }
-        }
+// ----------------------- Drawing & Rendering Methods -----------------------
 
-        it->ResolveBoundsCollision(m_bounds);
+void GameScene::DrawGUI() noexcept {
+    DrawFPS(10, 10);
+
+    std::string score_str = std::format("Score: {}", m_statistics.score);
+    std::string level_str = std::format("Level: {}", m_statistics.level);
+
+    constexpr uint32_t FONT_SIZE = 50;
+
+    DrawText(score_str.c_str(), GetScreenWidth() / 4 - MeasureText(score_str.c_str(), FONT_SIZE) / 2, 30, FONT_SIZE, WHITE);
+    DrawText(level_str.c_str(), GetScreenWidth() * 3 / 4 - MeasureText(level_str.c_str(), FONT_SIZE) / 2, 30, FONT_SIZE, WHITE);
+
+    DrawText(std::format("Accuracy: {:.1f}%", m_statistics.GetAccuracy() * 100.0F).c_str(), 10, 70, 20, WHITE);
+
+    // Draw lives as spaceship sprites
+    for (int i = 0; i < m_player.lives; ++i) {
+        constexpr int32_t TEXTURE_SCALE = 4;
+
+        int32_t offset_x = m_spaceship_tex.width * TEXTURE_SCALE / 2;
+        int32_t offset_y = m_spaceship_tex.height * TEXTURE_SCALE / 2;
+
+        int32_t x = 50 + i * (m_spaceship_tex.width * TEXTURE_SCALE + 10);
+        int32_t y = GetScreenHeight() - 50;
+
+        DrawTextureEx(m_spaceship_tex, {static_cast<float>(x - offset_x), static_cast<float>(y - offset_y)}, 0.0F, TEXTURE_SCALE, WHITE);
     }
 }
+
+void GameScene::DrawCrosshair() noexcept {
+    constexpr Color CROSSHAIR_COLOR = {255, 255, 255, 255};
+    constexpr int CROSSHAIR_SIZE = 10;
+
+    int center_x = GetScreenWidth() / 2;
+    int center_y = GetScreenHeight() / 2;
+
+    DrawLine(center_x - CROSSHAIR_SIZE, center_y, center_x + CROSSHAIR_SIZE, center_y, CROSSHAIR_COLOR);
+    DrawLine(center_x, center_y - CROSSHAIR_SIZE, center_x, center_y + CROSSHAIR_SIZE, CROSSHAIR_COLOR);
+}
+
+void GameScene::RenderAsteroids() noexcept {
+    Raycast player_ray = m_player.GetRaycast();
+    glm::mat4 view_projection = m_projection * m_view;
+
+    for (const Asteroid& asteroid : m_asteroids) {
+        glm::mat4 model = glm::mat4(1.0F);
+        model = glm::translate(model, asteroid.GetPosition());
+        model = glm::rotate(model, asteroid.GetRotation().x, glm::vec3(1.0F, 0.0F, 0.0F));
+        model = glm::rotate(model, asteroid.GetRotation().y, glm::vec3(0.0F, 1.0F, 0.0F));
+
+        glm::mat4 mvp = view_projection * model;
+
+        Color color = LIGHTGRAY;
+
+        if (asteroid.Cast(player_ray).hit) {
+            color = GREEN;
+        }
+
+        if (!asteroid.IsDestroyed()) {
+            RenderPoligon(asteroid.GetVertices(), mvp, color);
+        }
+    }
+}
+
+void GameScene::CalculateMatrices() noexcept {
+    float aspect_ratio = static_cast<float>(GetScreenWidth()) / static_cast<float>(GetScreenHeight());
+    m_projection = glm::perspective(glm::radians(FOV), aspect_ratio, NEAR_PLANE, FAR_PLANE);
+
+    m_rotation = glm::mat4_cast(glm::conjugate(m_player.m_orientation));
+    m_view = m_rotation * glm::translate(glm::mat4(1.0F), -m_player.m_position);
+}
+
+// ----------------------- Asset Management Methods -----------------------
+
+void GameScene::LoadAssets() noexcept {
+    m_shoot_sound = LoadSound("assets/sounds/shoot.mp3");
+    m_destroy_sound = LoadSound("assets/sounds/destroy.mp3");
+
+    Image img = LoadImage("assets/textures/spaceship.png");
+    m_spaceship_tex = LoadTextureFromImage(img);
+    UnloadImage(img);
+}
+
+void GameScene::UnloadAssets() noexcept {
+    UnloadSound(m_shoot_sound);
+    UnloadSound(m_destroy_sound);
+
+    UnloadTexture(m_spaceship_tex);
+}
+
+// ----------------------- Player Input -----------------------
 
 void GameScene::ProcessPlayerMovement() noexcept {
     float mov_delta = m_player.speed * GetFrameTime();
@@ -169,25 +210,15 @@ void GameScene::ProcessPlayerAttack() noexcept {
         m_statistics.shots_fired++;
         PlaySound(m_shoot_sound);
 
-        Raycast ray = GetAimRay();
-        float closest_distance = std::numeric_limits<float>::max();
-        Asteroid* hit_asteroid = nullptr;
-
-        for (Asteroid& asteroid : m_asteroids) {
-            RaycastResult result = asteroid.Cast(ray);
-            if (result.hit && result.distance < closest_distance) {
-                closest_distance = result.distance;
-                hit_asteroid = &asteroid;
-            }
-        }
+        Asteroid* hit_asteroid = GetClosestHitAsteroid(m_player.GetRaycast());
 
         if (hit_asteroid != nullptr) {
             hit_asteroid->Attack();
-            m_statistics.score += 10;
+            m_statistics.score += POINTS_PER_HIT;
 
             if (hit_asteroid->IsDestroyed()) {
                 m_statistics.asteroids_destroyed++;
-                m_statistics.score += 100;
+                m_statistics.score += POINTS_PER_DESTROYED_ASTEROID;
                 PlaySound(m_destroy_sound);
             }
         } else {
@@ -196,91 +227,75 @@ void GameScene::ProcessPlayerAttack() noexcept {
     }
 }
 
-void GameScene::Render() noexcept {
-    ClearBackground(BLACK);
+// ----------------------- Physics -----------------------
 
-    CalculateMatrices();
-    m_animation_time += GetFrameTime();
+void GameScene::CheckCollisions() noexcept {
+    // Check collisions between asteroids and player
+    for (auto it = m_asteroids.begin(); it != m_asteroids.end(); ++it) {
+        if (it->CollidesWith(m_player)) {
+            m_player.lives -= 1;
 
-    m_starfield.Render(m_projection * m_rotation, m_animation_time);
-    RenderAsteroids();
+            if (m_player.lives <= 0) {
+                GetApplication()->TransitionScene<GameoverScene>();
+                return;
+            }
 
-    DrawGUI();
-    DrawCrosshair();
-}
+            it = m_asteroids.erase(it);
+            if (it == m_asteroids.end()) {
+                break;
+            }
 
-void GameScene::DrawGUI() noexcept {
-    DrawFPS(10, 10);
+            PlaySound(m_destroy_sound);
+        }
+    }
 
-    std::string score_str = std::format("Score: {}", m_statistics.score);
-    std::string level_str = std::format("Level: {}", m_statistics.level);
+    // Check collisions between asteroids and resolve boundary collisions
+    for (auto it = m_asteroids.begin(); it != m_asteroids.end(); ++it) {
+        for (auto jt = it + 1; jt != m_asteroids.end(); ++jt) {
+            if (it->CollidesWith(*jt)) {
+                it->ResolveCollision(*jt);
+            }
+        }
 
-    constexpr uint32_t FONT_SIZE = 50;
-
-    DrawText(score_str.c_str(), GetScreenWidth() / 4 - MeasureText(score_str.c_str(), FONT_SIZE) / 2, 30, FONT_SIZE, WHITE);
-    DrawText(level_str.c_str(), GetScreenWidth() * 3 / 4 - MeasureText(level_str.c_str(), FONT_SIZE) / 2, 30, FONT_SIZE, WHITE);
-
-    DrawText(std::format("Accuracy: {:.1f}%", m_statistics.GetAccuracy() * 100.0F).c_str(), 10, 70, 20, WHITE);
-
-    // Draw lives as spaceship sprites
-    for (int i = 0; i < m_player.lives; ++i) {
-        constexpr int32_t TEXTURE_SCALE = 4;
-
-        int32_t offset_x = m_spaceship_tex.width * TEXTURE_SCALE / 2;
-        int32_t offset_y = m_spaceship_tex.height * TEXTURE_SCALE / 2;
-
-        int32_t x = 50 + i * (m_spaceship_tex.width * TEXTURE_SCALE + 10);
-        int32_t y = GetScreenHeight() - 50;
-
-        DrawTextureEx(m_spaceship_tex, {static_cast<float>(x - offset_x), static_cast<float>(y - offset_y)}, 0.0F, TEXTURE_SCALE, WHITE);
+        it->ResolveBoundsCollision(m_bounds);
     }
 }
 
-void GameScene::DrawCrosshair() noexcept {
-    constexpr Color CROSSHAIR_COLOR = {255, 255, 255, 255};
-    constexpr int CROSSHAIR_SIZE = 10;
+Asteroid* GameScene::GetClosestHitAsteroid(const Raycast& ray) noexcept {
+    float closest_distance = std::numeric_limits<float>::max();
+    Asteroid* hit_asteroid = nullptr;
 
-    int center_x = GetScreenWidth() / 2;
-    int center_y = GetScreenHeight() / 2;
-
-    DrawLine(center_x - CROSSHAIR_SIZE, center_y, center_x + CROSSHAIR_SIZE, center_y, CROSSHAIR_COLOR);
-    DrawLine(center_x, center_y - CROSSHAIR_SIZE, center_x, center_y + CROSSHAIR_SIZE, CROSSHAIR_COLOR);
-}
-
-void GameScene::RenderAsteroids() noexcept {
-    Raycast player_ray = GetAimRay();
-    glm::mat4 view_projection = m_projection * m_view;
-
-    for (const Asteroid& asteroid : m_asteroids) {
-        glm::mat4 model = glm::mat4(1.0F);
-        model = glm::translate(model, asteroid.GetPosition());
-        model = glm::rotate(model, asteroid.GetRotation().x, glm::vec3(1.0F, 0.0F, 0.0F));
-        model = glm::rotate(model, asteroid.GetRotation().y, glm::vec3(0.0F, 1.0F, 0.0F));
-
-        glm::mat4 mvp = view_projection * model;
-
-        Color color = LIGHTGRAY;
-
-        if (asteroid.Cast(player_ray).hit) {
-            color = GREEN;
-        }
-
-        if (!asteroid.IsDestroyed()) {
-            RenderPoligon(asteroid.GetVertices(), mvp, color);
+    for (Asteroid& asteroid : m_asteroids) {
+        RaycastResult result = asteroid.Cast(ray);
+        if (result.hit && result.distance < closest_distance) {
+            closest_distance = result.distance;
+            hit_asteroid = &asteroid;
         }
     }
+
+    return hit_asteroid;
 }
 
-void GameScene::CalculateMatrices() noexcept {
-    float aspect_ratio = static_cast<float>(GetScreenWidth()) / static_cast<float>(GetScreenHeight());
-    m_projection = glm::perspective(glm::radians(FOV), aspect_ratio, NEAR_PLANE, FAR_PLANE);
+// ----------------------- Generation -----------------------
 
-    m_rotation = glm::mat4_cast(glm::conjugate(m_player.m_orientation));
-    m_view = m_rotation * glm::translate(glm::mat4(1.0F), -m_player.m_position);
-}
+void GameScene::GenerateAsteroid() noexcept {
+    Asteroid& asteroid = m_asteroids.emplace_back();
+    float base_radius = RandomFloat(1.0F, 12.0F);
+    uint32_t lives = static_cast<uint32_t>(base_radius * 0.5F) + 1;
+    uint32_t vertex_count = static_cast<uint32_t>(base_radius * 5.0F) + 10;
 
-Raycast GameScene::GetAimRay() noexcept {
-    return m_player.GetRaycast();
+    asteroid.SetRadius(base_radius);
+    asteroid.SetLives(lives);
+    asteroid.GenerateVertices(vertex_count);
+
+    asteroid.SetPosition(RandomVector(-BOUNDS_SIZE * 0.8F, BOUNDS_SIZE * 0.8F));
+    asteroid.SetRotation(RandomVector(0.0F, M_2_PIf32));
+
+    glm::vec3 velocity_direction = glm::normalize(RandomVector(-1.0F, 1.0F));
+    glm::vec3 angular_velocity_direction = glm::normalize(RandomVector(-1.0F, 1.0F));
+
+    asteroid.SetVelocity(velocity_direction * RandomFloat(5.0F, 40.0F));
+    asteroid.SetAngularVelocity(angular_velocity_direction * RandomFloat(0.5F, 2.0F));
 }
 
 }  // namespace cosmic

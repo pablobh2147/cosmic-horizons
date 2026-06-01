@@ -42,16 +42,20 @@ class GameScene : public Scene {
 
     static constexpr float BOUNDS_SIZE = 80.0F;
 
+    static constexpr int32_t POINTS_PER_HIT = 10;
+    static constexpr int32_t POINTS_PER_DESTROYED_ASTEROID = 100;
+
    public:
     void Initialize() noexcept override;
+    void Shutdown() noexcept override;
     void Update() noexcept override;
     void Render() noexcept override;
-    void Shutdown() noexcept override;
 
    private:
     void DrawGUI() noexcept;
     void DrawCrosshair() noexcept;
     void RenderAsteroids() noexcept;
+    void CalculateMatrices() noexcept;
 
     void LoadAssets() noexcept;
     void UnloadAssets() noexcept;
@@ -60,9 +64,7 @@ class GameScene : public Scene {
     void ProcessPlayerAttack() noexcept;
 
     void CheckCollisions() noexcept;
-
-    void CalculateMatrices() noexcept;
-    Raycast GetAimRay() noexcept;
+    Asteroid* GetClosestHitAsteroid(const Raycast& ray) noexcept;
 
     void GenerateAsteroid() noexcept;
 
@@ -74,14 +76,11 @@ class GameScene : public Scene {
     Statistics m_statistics;
     BoundingBox m_bounds;
 
-    glm::vec2 m_aim;
-
     glm::mat4 m_projection;
     glm::mat4 m_view;
     glm::mat4 m_rotation;
 
     float m_animation_time = 0.0F;
-
     Starfield m_starfield;
 
     // Assets
