@@ -9,7 +9,7 @@
 | Main Menu | Gameplay |
 |:---------:|:--------:|
 | ![Main Menu](docs/img/main_menu.png) | ![Gameplay 1](docs/img/gameplay_1.png) |
-|  | ![Gameplay 2](docs/img/gameplay_2.png) |
+| ![Gameover Menu](docs/img/gameover_menu.png) | ![Gameplay 2](docs/img/gameplay_2.png) |
 
 ## Features
 
