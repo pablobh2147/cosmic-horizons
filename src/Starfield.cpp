@@ -5,7 +5,7 @@
 namespace cosmic {
 
 void Starfield::Generate(uint32_t count) noexcept {
-    constexpr std::array<Color, 5> star_colors = {
+    constexpr std::array<Color, 5> STAR_COLORS = {
         Color {255, 255, 255, 255}, // White
         Color {200, 220, 255, 255}, // Blue-white
         Color {255, 240, 200, 255}, // Warm yellow
@@ -17,7 +17,7 @@ void Starfield::Generate(uint32_t count) noexcept {
     for (uint32_t i = 0; i < count; ++i) {
         Star& star = m_starfield.emplace_back();
         star.position = RandomVector(-1.0F, 1.0F);
-        star.color = star_colors[RandomInt(0, static_cast<int32_t>(star_colors.size()) - 1)];
+        star.color = STAR_COLORS[RandomInt(0, static_cast<int32_t>(STAR_COLORS.size()) - 1)];
         star.twinkle_speed = RandomFloat(MIN_TWINKLE_SPEED, MAX_TWINKLE_SPEED);
         star.twinkle_phase = RandomFloat(0.0F, M_2_PIf32);
         star.min_brightness = RandomFloat(MIN_BRIGHTNESS, MAX_BRIGHTNESS);
@@ -33,13 +33,13 @@ void Starfield::Render(const glm::mat4& mvp, float animation_time) noexcept {
         float brightness = star.min_brightness + (1.0F - star.min_brightness) * (t * 0.5F + 0.5F);
 
         Color color = {
-            static_cast<unsigned char>(star.color.r * brightness),
-            static_cast<unsigned char>(star.color.g * brightness),
-            static_cast<unsigned char>(star.color.b * brightness),
+            static_cast<uint8_t>(star.color.r * brightness),
+            static_cast<uint8_t>(star.color.g * brightness),
+            static_cast<uint8_t>(star.color.b * brightness),
             255,
         };
 
-        DrawCircle(static_cast<int>(screen_pos.x), static_cast<int>(screen_pos.y), 1.0F, color);
+        DrawCircle(static_cast<int32_t>(screen_pos.x), static_cast<int32_t>(screen_pos.y), 1.0F, color);
     }
 }
 
