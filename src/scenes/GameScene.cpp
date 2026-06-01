@@ -106,8 +106,9 @@ void GameScene::DrawCrosshair() noexcept {
 }
 
 void GameScene::RenderAsteroids() noexcept {
-    Raycast player_ray = m_player.GetRaycast();
     glm::mat4 view_projection = m_projection * m_view;
+
+    Asteroid* closest_asteroid = GetClosestHitAsteroid(m_player.GetRaycast());
 
     for (const Asteroid& asteroid : m_asteroids) {
         glm::mat4 model = glm::mat4(1.0F);
@@ -116,12 +117,7 @@ void GameScene::RenderAsteroids() noexcept {
         model = glm::rotate(model, asteroid.GetRotation().y, glm::vec3(0.0F, 1.0F, 0.0F));
 
         glm::mat4 mvp = view_projection * model;
-
-        Color color = LIGHTGRAY;
-
-        if (asteroid.Cast(player_ray).hit) {
-            color = GREEN;
-        }
+        Color color = &asteroid == closest_asteroid ? GREEN : LIGHTGRAY;
 
         if (!asteroid.IsDestroyed()) {
             RenderPoligon(asteroid.GetVertices(), mvp, color);
