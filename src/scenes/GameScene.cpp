@@ -21,11 +21,6 @@ namespace cosmic {
 // ----------------------- Scene Methods -----------------------
 
 void GameScene::Initialize() noexcept {
-    m_bounds = {
-        .min = {-BOUNDS_SIZE, -BOUNDS_SIZE, -BOUNDS_SIZE},
-        .max = {BOUNDS_SIZE,  BOUNDS_SIZE,  BOUNDS_SIZE },
-    };
-
     LoadAssets();
     m_starfield.Generate(STARFIELD_COUNT);
 

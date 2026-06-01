@@ -74,7 +74,6 @@ class GameScene : public Scene {
     Player m_player;
     std::vector<Asteroid> m_asteroids;
     Statistics m_statistics;
-    BoundingBox m_bounds;
 
     glm::mat4 m_projection;
     glm::mat4 m_view;
