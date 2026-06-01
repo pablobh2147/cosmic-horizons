@@ -58,23 +58,6 @@ cmake --build build
 
 > **Note:** Tested on Linux. Since the only external dependency is Raylib (included as a submodule), it should work on Windows and macOS as well.
 
-## Project Structure
-
-```
-cosmic-horizons/
-├── assets/
-│   ├── sounds/          # Audio files (shoot, destroy)
-│   └── textures/        # Sprite textures
-├── inc/                 # Header files
-│   └── scenes/          # Scene headers
-├── src/                 # Source files
-│   └── scenes/          # Scene implementations (MainMenu, Game, GameOver)
-├── lib/                 # Git submodules (Raylib, GLM)
-├── CMakeLists.txt
-├── CREDITS.md
-└── LICENSE
-```
-
 ## Dependencies
 
 | Library | Purpose | Included as |
