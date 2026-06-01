@@ -13,8 +13,13 @@ struct InputConfiguration {
     int32_t roll_right_key = KEY_D;
 };
 
+struct PhysicsConfiguration {
+    float damping = 0.9F;
+};
+
 struct Configuration {
     InputConfiguration input;
+    PhysicsConfiguration physics;
 };
 
 }  // namespace cosmic

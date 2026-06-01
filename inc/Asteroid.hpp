@@ -9,14 +9,11 @@
 
 namespace cosmic {
 
-constexpr double SHRINK_FACTOR = 0.7;
-
-struct BoundingBox {
-    glm::vec3 min;
-    glm::vec3 max;
-};
-
 class Asteroid {
+   private:
+    static constexpr float DENSITY = 1.0F;
+    static constexpr float SHRINK_FACTOR = 0.7;
+
    public:
     Asteroid() = default;
     ~Asteroid() = default;
@@ -72,8 +69,11 @@ class Asteroid {
     bool CollidesWith(const Asteroid& other) const noexcept { return CollidesWith(other.m_position, other.m_radius); }
     bool CollidesWith(const Player& player) const noexcept { return CollidesWith(player.m_position, Player::COLLISION_RADIUS); }
 
-    void ResolveCollision(Asteroid& other) noexcept;
-    void ResolveBoundsCollision(const BoundingBox& bounds) noexcept;
+    void ResolveCollision(Asteroid& other, float damping) noexcept;
+    void ResolveBoundsCollision(glm::vec3 min, glm::vec3 max, float damping) noexcept;
+
+   private:
+    float GetMass() noexcept;
 
    private:
     glm::vec3 m_position = {0.0F, 0.0F, 0.0F};

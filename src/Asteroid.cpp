@@ -80,51 +80,57 @@ bool Asteroid::CollidesWith(glm::vec3 position, double radius) const noexcept {
     return distance < (m_radius + radius);
 }
 
-void Asteroid::ResolveCollision(Asteroid& other) noexcept {
-    // Simple elastic collision response
+void Asteroid::ResolveCollision(Asteroid& other, float damping) noexcept {
     glm::vec3 normal = glm::normalize(other.m_position - m_position);
     float relative_speed = glm::dot(other.m_velocity - m_velocity, normal);
 
-    if (relative_speed > 0) return;  // Objects separating
+    if (relative_speed > 0) return;  // Objects are separating
 
-    // Swap velocities (simplified elastic collision)
-    glm::vec3 temp_velocity = m_velocity;
-    m_velocity = other.m_velocity;
-    other.m_velocity = temp_velocity;
+    float mass1 = GetMass();
+    float mass2 = other.GetMass();
+    float inverse_mass_sum = 1.0F / mass1 + 1.0F / mass2;
+
+    glm::vec3 impulse = normal * relative_speed * (1.0F + damping) / inverse_mass_sum;
+
+    m_velocity += impulse / mass1;
+    other.m_velocity -= impulse / mass2;
 }
 
-void Asteroid::ResolveBoundsCollision(const BoundingBox& bounds) noexcept {
-    constexpr float BOUNCE_DAMPING = 1.0F;
-
-    if (m_position.x - m_radius < bounds.min.x) {
-        m_position.x = bounds.min.x + m_radius;
-        m_velocity.x = -m_velocity.x * BOUNCE_DAMPING;
+void Asteroid::ResolveBoundsCollision(glm::vec3 min, glm::vec3 max, float damping) noexcept {
+    if (m_position.x - m_radius < min.x) {
+        m_position.x = min.x + m_radius;
+        m_velocity.x = -m_velocity.x * damping;
     }
 
-    if (m_position.x + m_radius > bounds.max.x) {
-        m_position.x = bounds.max.x - m_radius;
-        m_velocity.x = -m_velocity.x * BOUNCE_DAMPING;
+    if (m_position.x + m_radius > max.x) {
+        m_position.x = max.x - m_radius;
+        m_velocity.x = -m_velocity.x * damping;
     }
 
-    if (m_position.y - m_radius < bounds.min.y) {
-        m_position.y = bounds.min.y + m_radius;
-        m_velocity.y = -m_velocity.y * BOUNCE_DAMPING;
+    if (m_position.y - m_radius < min.y) {
+        m_position.y = min.y + m_radius;
+        m_velocity.y = -m_velocity.y * damping;
     }
 
-    if (m_position.y + m_radius > bounds.max.y) {
-        m_position.y = bounds.max.y - m_radius;
-        m_velocity.y = -m_velocity.y * BOUNCE_DAMPING;
+    if (m_position.y + m_radius > max.y) {
+        m_position.y = max.y - m_radius;
+        m_velocity.y = -m_velocity.y * damping;
     }
 
-    if (m_position.z - m_radius < bounds.min.z) {
-        m_position.z = bounds.min.z + m_radius;
-        m_velocity.z = -m_velocity.z * BOUNCE_DAMPING;
+    if (m_position.z - m_radius < min.z) {
+        m_position.z = min.z + m_radius;
+        m_velocity.z = -m_velocity.z * damping;
     }
 
-    if (m_position.z + m_radius > bounds.max.z) {
-        m_position.z = bounds.max.z - m_radius;
-        m_velocity.z = -m_velocity.z * BOUNCE_DAMPING;
+    if (m_position.z + m_radius > max.z) {
+        m_position.z = max.z - m_radius;
+        m_velocity.z = -m_velocity.z * damping;
     }
+}
+
+float Asteroid::GetMass() noexcept {
+    float volume = (4.0F / 3.0F) * M_PIf32 * m_radius * m_radius * m_radius;
+    return volume * DENSITY;
 }
 
 }  // namespace cosmic

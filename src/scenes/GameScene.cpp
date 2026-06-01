@@ -253,11 +253,11 @@ void GameScene::CheckCollisions() noexcept {
     for (auto it = m_asteroids.begin(); it != m_asteroids.end(); ++it) {
         for (auto jt = it + 1; jt != m_asteroids.end(); ++jt) {
             if (it->CollidesWith(*jt)) {
-                it->ResolveCollision(*jt);
+                it->ResolveCollision(*jt, m_config.physics.damping);
             }
         }
 
-        it->ResolveBoundsCollision(m_bounds);
+        it->ResolveBoundsCollision(glm::vec3(-BOUNDS_SIZE), glm::vec3(BOUNDS_SIZE), m_config.physics.damping);
     }
 }
 
