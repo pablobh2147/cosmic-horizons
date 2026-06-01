@@ -51,18 +51,3 @@ open docs/output/html/index.html
 # Windows
 start docs/output/html/index.html
 ```
-
-## Configuration
-
-The Doxygen configuration is in `Doxyfile`. Key settings:
-
-- **INPUT**: Scans `inc/`, `src/`, and `README.md`
-- **OUTPUT_DIRECTORY**: `docs/output`
-- **EXTRACT_ALL**: YES (documents all code, even without comments)
-- **SOURCE_BROWSER**: YES (includes source code in documentation)
-- **RECURSIVE**: YES (processes subdirectories)
-- **EXCLUDE_PATTERNS**: Excludes `build/`, `lib/`, and `.git/`
-
-## Output
-
-The generated documentation is excluded from version control (see `.gitignore`).
