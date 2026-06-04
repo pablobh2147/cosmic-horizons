@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 include_directories(${CMAKE_SOURCE_DIR}/inc)
 include_directories(${CMAKE_SOURCE_DIR}/lib/glm)
 
-add_subdirectory(lib/raylib)
+add_subdirectory(${CMAKE_SOURCE_DIR}/lib/raylib)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
