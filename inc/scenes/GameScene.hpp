@@ -74,6 +74,7 @@ class GameScene : public Scene {
     void InitializeLevel(uint32_t level) noexcept;
 
     void SpawnExplosionParticles(glm::vec3 position) noexcept;
+    void SpawnHitParticles(glm::vec3 position, float radius) noexcept;
 
    private:
     // ------ Configuration ------

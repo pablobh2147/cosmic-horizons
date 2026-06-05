@@ -71,15 +71,15 @@ void GameScene::Render() noexcept {
 // ----------------------- Drawing & Rendering Methods -----------------------
 
 void GameScene::DrawGUI() noexcept {
-    DrawFPS(10, 10);
-
     constexpr uint32_t FONT_SIZE = 50;
 
     std::string score_str = std::format("Score: {}", m_statistics.score);
     std::string level_str = std::format("Level: {}", m_statistics.level);
+    std::string asteroids_str = std::format("Asteroids: {}", m_asteroids.size());
 
     DrawText(score_str.c_str(), GetScreenWidth() * 1 / 4 - MeasureText(score_str.c_str(), FONT_SIZE) / 2, 30, FONT_SIZE, WHITE);
     DrawText(level_str.c_str(), GetScreenWidth() * 3 / 4 - MeasureText(level_str.c_str(), FONT_SIZE) / 2, 30, FONT_SIZE, WHITE);
+    DrawText(asteroids_str.c_str(), GetScreenWidth() / 2 - MeasureText(asteroids_str.c_str(), FONT_SIZE) / 2, 30, FONT_SIZE, WHITE);
 
     DrawText(std::format("Accuracy: {:.1f}%", m_statistics.GetAccuracy() * 100.0F).c_str(), 10, 70, 20, WHITE);
 
@@ -220,6 +220,8 @@ void GameScene::ProcessPlayerAttack() noexcept {
                 SpawnExplosionParticles(hit_asteroid->GetPosition());
 
                 PlaySound(m_destroy_sound);
+            } else {
+                SpawnHitParticles(hit_asteroid->GetPosition(), hit_asteroid->GetRadius());
             }
         } else {
             m_statistics.misses++;
@@ -364,6 +366,36 @@ void GameScene::SpawnExplosionParticles(glm::vec3 position) noexcept {
         float size = RandomFloat(MIN_PARTICLE_SIZE, MAX_PARTICLE_SIZE);
 
         m_particle_system.AddParticle(position, velocity, color, size, lifetime);
+    }
+}
+
+void GameScene::SpawnHitParticles(glm::vec3 position, float radius) noexcept {
+    constexpr size_t PARTICLE_COUNT = 10;
+    constexpr float MIN_SPEED = 10.0F;
+    constexpr float MAX_SPEED = 30.0F;
+    constexpr float MIN_LIFETIME = 0.2F;
+    constexpr float MAX_LIFETIME = 0.8F;
+    constexpr float MIN_PARTICLE_SIZE = 0.5F;
+    constexpr float MAX_PARTICLE_SIZE = 1.5F;
+
+    for (size_t i = 0; i < PARTICLE_COUNT; ++i) {
+        glm::vec3 direction = glm::normalize(RandomVector(-1.0F, 1.0F));
+        glm::vec3 velocity = direction * RandomFloat(MIN_SPEED, MAX_SPEED);
+        glm::vec3 particle_position = position + direction * radius;
+
+        uint8_t random_value = static_cast<uint8_t>(RandomInt(100, 255));
+
+        Color color = {
+            random_value,
+            random_value,
+            random_value,
+            255,
+        };
+
+        float lifetime = RandomFloat(MIN_LIFETIME, MAX_LIFETIME);
+        float size = RandomFloat(MIN_PARTICLE_SIZE, MAX_PARTICLE_SIZE);
+
+        m_particle_system.AddParticle(particle_position, velocity, color, size, lifetime);
     }
 }
 
