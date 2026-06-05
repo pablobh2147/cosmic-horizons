@@ -238,7 +238,7 @@ void GameScene::CheckCollisions() noexcept {
             m_player.lives -= 1;
 
             if (m_player.lives <= 0) {
-                GetApplication()->TransitionScene<GameoverScene>();
+                GetApplication()->TransitionScene<GameoverScene>(m_statistics);
                 return;
             }
 
