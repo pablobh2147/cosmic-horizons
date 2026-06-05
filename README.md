@@ -6,10 +6,15 @@
 
 ## Screenshots
 
-| Main Menu | Gameplay |
-|:---------:|:--------:|
-| ![Main Menu](docs/img/main_menu.png) | ![Gameplay 1](docs/img/gameplay_1.png) |
-| ![Gameover Menu](docs/img/gameover_menu.png) | ![Gameplay 2](docs/img/gameplay_2.png) |
+<div align="center">
+  <img src="docs/img/main_menu.png" alt="Main Menu" width="45%" />
+  <img src="docs/img/gameplay_1.png" alt="Gameplay 1" width="45%" />
+  <br/>
+  <img src="docs/img/gameplay_2.png" alt="Gameplay 2" width="45%" />
+  <img src="docs/img/asteroid_explode.png" alt="Asteroid Explosion" width="45%" />
+  <br/>
+  <img src="docs/img/gameover_menu.png" alt="Gameover Menu" width="45%" />
+</div>
 
 ## Features
 
