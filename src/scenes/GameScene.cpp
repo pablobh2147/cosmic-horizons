@@ -37,6 +37,7 @@ void GameScene::Shutdown() noexcept {
 void GameScene::Update() noexcept {
     ProcessPlayerMovement();
     ProcessPlayerAttack();
+    m_particle_system.Update(GetFrameTime());
 
     if (IsKeyPressed(KEY_R)) {
         GenerateAsteroid();
@@ -64,6 +65,7 @@ void GameScene::Render() noexcept {
 
     m_starfield.Render(m_projection * m_rotation, m_animation_time);
     RenderAsteroids();
+    m_particle_system.Render(m_projection * m_view);
 
     DrawGUI();
     DrawCrosshair();
@@ -217,6 +219,9 @@ void GameScene::ProcessPlayerAttack() noexcept {
             if (hit_asteroid->IsDestroyed()) {
                 m_statistics.asteroids_destroyed++;
                 m_statistics.score += POINTS_PER_DESTROYED_ASTEROID;
+
+                SpawnExplosionParticles(hit_asteroid->GetPosition());
+
                 PlaySound(m_destroy_sound);
             }
         } else {
@@ -333,6 +338,35 @@ void GameScene::InitializeLevel(uint32_t level) noexcept {
 
     for (uint32_t i = 0; i < asteroid_count; ++i) {
         GenerateAsteroid();
+    }
+}
+
+// ----------------------- Particles -----------------------
+
+void GameScene::SpawnExplosionParticles(glm::vec3 position) noexcept {
+    constexpr size_t EXPLOSION_PARTICLE_COUNT = 20;
+    constexpr float MIN_EXPLOSION_SPEED = 40.0F;
+    constexpr float MAX_EXPLOSION_SPEED = 60.0F;
+    constexpr float MIN_EXPLOSION_LIFETIME = 0.8F;
+    constexpr float MAX_EXPLOSION_LIFETIME = 2.0F;
+    constexpr float MIN_PARTICLE_SIZE = 1.0F;
+    constexpr float MAX_PARTICLE_SIZE = 3.0F;
+
+    for (size_t i = 0; i < EXPLOSION_PARTICLE_COUNT; ++i) {
+        glm::vec3 direction = glm::normalize(RandomVector(-1.0F, 1.0F));
+        glm::vec3 velocity = direction * RandomFloat(MIN_EXPLOSION_SPEED, MAX_EXPLOSION_SPEED);
+
+        Color color = {
+            static_cast<uint8_t>(RandomInt(200, 255)),
+            static_cast<uint8_t>(RandomInt(100, 255)),
+            0,
+            255,
+        };
+
+        float lifetime = RandomFloat(MIN_EXPLOSION_LIFETIME, MAX_EXPLOSION_LIFETIME);
+        float size = RandomFloat(MIN_PARTICLE_SIZE, MAX_PARTICLE_SIZE);
+
+        m_particle_system.AddParticle(position, velocity, color, size, lifetime);
     }
 }
 

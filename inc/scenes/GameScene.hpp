@@ -9,6 +9,7 @@
 
 #include "Asteroid.hpp"
 #include "Configuration.hpp"
+#include "ParticleSystem.hpp"
 #include "Player.hpp"
 #include "Raycast.hpp"
 #include "Scene.hpp"
@@ -72,6 +73,8 @@ class GameScene : public Scene {
     void AdvanceLevel() noexcept;
     void InitializeLevel(uint32_t level) noexcept;
 
+    void SpawnExplosionParticles(glm::vec3 position) noexcept;
+
    private:
     // ------ Configuration ------
     Configuration m_config = {};
@@ -87,7 +90,9 @@ class GameScene : public Scene {
     glm::mat4 m_rotation;
 
     float m_animation_time = 0.0F;
+
     Starfield m_starfield;
+    ParticleSystem m_particle_system;
 
     // ------ Assets ------
     Sound m_shoot_sound;
