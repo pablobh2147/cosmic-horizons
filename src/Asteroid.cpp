@@ -75,7 +75,7 @@ RaycastResult Asteroid::Cast(const Raycast& raycast) const noexcept {
     return result;
 }
 
-bool Asteroid::CollidesWith(glm::vec3 position, double radius) const noexcept {
+bool Asteroid::CollidesWith(glm::vec3 position, float radius) const noexcept {
     float distance = glm::distance(m_position, position);
     return distance < (m_radius + radius);
 }

@@ -32,14 +32,14 @@ class Asteroid {
     [[nodiscard]] glm::vec3 GetVelocity() const noexcept { return m_velocity; }
     [[nodiscard]] glm::vec3 GetRotation() const noexcept { return m_rotation; }
     [[nodiscard]] glm::vec3 GetAngularVelocity() const noexcept { return m_angular_velocity; }
-    [[nodiscard]] double GetRadius() const noexcept { return m_radius; }
+    [[nodiscard]] float GetRadius() const noexcept { return m_radius; }
     [[nodiscard]] uint32_t GetLives() const noexcept { return m_lives; }
 
     void SetPosition(const glm::vec3& position) noexcept { m_position = position; }
     void SetVelocity(const glm::vec3& velocity) noexcept { m_velocity = velocity; }
     void SetRotation(const glm::vec3& rotation) noexcept { m_rotation = rotation; }
     void SetAngularVelocity(const glm::vec3& angular_velocity) noexcept { m_angular_velocity = angular_velocity; }
-    void SetRadius(double radius) noexcept { m_radius = radius; }
+    void SetRadius(float radius) noexcept { m_radius = radius; }
     void SetLives(uint32_t lives) noexcept { m_lives = lives; }
 
     bool IsDestroyed() const noexcept { return m_lives <= 0; }
@@ -65,7 +65,7 @@ class Asteroid {
 
     RaycastResult Cast(const Raycast& raycast) const noexcept;
 
-    bool CollidesWith(glm::vec3 position, double radius) const noexcept;
+    bool CollidesWith(glm::vec3 position, float radius) const noexcept;
     bool CollidesWith(const Asteroid& other) const noexcept { return CollidesWith(other.m_position, other.m_radius); }
     bool CollidesWith(const Player& player) const noexcept { return CollidesWith(player.m_position, Player::COLLISION_RADIUS); }
 
@@ -81,7 +81,7 @@ class Asteroid {
     glm::vec3 m_rotation = {0.0F, 0.0F, 0.0F};
     glm::vec3 m_angular_velocity = {0.0F, 0.0F, 0.0F};
 
-    double m_radius = 1.0;
+    float m_radius = 1.0;
 
     uint32_t m_lives = 3;
 
