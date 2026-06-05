@@ -161,7 +161,7 @@ void GameScene::UnloadAssets() noexcept {
 // ----------------------- Player Input -----------------------
 
 void GameScene::ProcessPlayerMovement() noexcept {
-    constexpr float ROTATION_SPEED = 120.0F;
+    constexpr float ROTATION_SPEED = 12.0F;
     constexpr float ROLL_SPEED = 2.0F;
 
     float mov_delta = m_player.speed * GetFrameTime();
