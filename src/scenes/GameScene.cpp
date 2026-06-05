@@ -215,11 +215,11 @@ void GameScene::ProcessPlayerAttack() noexcept {
                 m_statistics.asteroids_destroyed++;
                 m_statistics.score += POINTS_PER_DESTROYED_ASTEROID;
 
-                SpawnExplosionParticles(hit_asteroid->GetPosition());
+                SpawnExplosionParticles(hit_asteroid->GetPosition(), hit_asteroid->GetVelocity());
 
                 PlaySound(m_destroy_sound);
             } else {
-                SpawnHitParticles(hit_asteroid->GetPosition(), hit_asteroid->GetRadius());
+                SpawnHitParticles(hit_asteroid->GetPosition(), hit_asteroid->GetRadius(), hit_asteroid->GetVelocity());
             }
         } else {
             m_statistics.misses++;
@@ -340,7 +340,7 @@ void GameScene::InitializeLevel(uint32_t level) noexcept {
 
 // ----------------------- Particles -----------------------
 
-void GameScene::SpawnExplosionParticles(glm::vec3 position) noexcept {
+void GameScene::SpawnExplosionParticles(glm::vec3 position, glm::vec3 initial_velocity) noexcept {
     constexpr size_t EXPLOSION_PARTICLE_COUNT = 20;
     constexpr float MIN_EXPLOSION_SPEED = 40.0F;
     constexpr float MAX_EXPLOSION_SPEED = 60.0F;
@@ -351,7 +351,7 @@ void GameScene::SpawnExplosionParticles(glm::vec3 position) noexcept {
 
     for (size_t i = 0; i < EXPLOSION_PARTICLE_COUNT; ++i) {
         glm::vec3 direction = glm::normalize(RandomVector(-1.0F, 1.0F));
-        glm::vec3 velocity = direction * RandomFloat(MIN_EXPLOSION_SPEED, MAX_EXPLOSION_SPEED);
+        glm::vec3 velocity = initial_velocity + direction * RandomFloat(MIN_EXPLOSION_SPEED, MAX_EXPLOSION_SPEED);
 
         Color color = {
             static_cast<uint8_t>(RandomInt(200, 255)),
@@ -367,7 +367,7 @@ void GameScene::SpawnExplosionParticles(glm::vec3 position) noexcept {
     }
 }
 
-void GameScene::SpawnHitParticles(glm::vec3 position, float radius) noexcept {
+void GameScene::SpawnHitParticles(glm::vec3 position, float radius, glm::vec3 initial_velocity) noexcept {
     constexpr size_t PARTICLE_COUNT = 10;
     constexpr float MIN_SPEED = 10.0F;
     constexpr float MAX_SPEED = 30.0F;
@@ -378,7 +378,7 @@ void GameScene::SpawnHitParticles(glm::vec3 position, float radius) noexcept {
 
     for (size_t i = 0; i < PARTICLE_COUNT; ++i) {
         glm::vec3 direction = glm::normalize(RandomVector(-1.0F, 1.0F));
-        glm::vec3 velocity = direction * RandomFloat(MIN_SPEED, MAX_SPEED);
+        glm::vec3 velocity = initial_velocity + direction * RandomFloat(MIN_SPEED, MAX_SPEED);
         glm::vec3 particle_position = position + direction * radius;
 
         uint8_t random_value = static_cast<uint8_t>(RandomInt(100, 255));
