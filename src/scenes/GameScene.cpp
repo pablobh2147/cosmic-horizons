@@ -9,6 +9,7 @@
 #include <cmath>
 #include <format>
 #include <limits>
+#include <numbers>
 #include <span>
 
 #include "Application.hpp"
@@ -171,8 +172,8 @@ void GameScene::ProcessPlayerMovement() noexcept {
     glm::vec3 right = m_player.GetRight();
     glm::vec3 up = m_player.GetUp();
 
-    float yaw_angle = -(GetMouseDelta().x / GetScreenWidth()) * rot_delta * M_2_PIf32;
-    float pitch_angle = -(GetMouseDelta().y / GetScreenHeight()) * rot_delta * M_2_PIf32;
+    float yaw_angle = -(GetMouseDelta().x / GetScreenWidth()) * rot_delta * std::numbers::pi_v<float> * 2.0F;
+    float pitch_angle = -(GetMouseDelta().y / GetScreenHeight()) * rot_delta * std::numbers::pi_v<float> * 2.0F;
 
     glm::quat q_yaw = glm::angleAxis(yaw_angle, up);
     glm::quat q_pitch = glm::angleAxis(pitch_angle, right);
@@ -316,7 +317,7 @@ void GameScene::GenerateAsteroid() noexcept {
     } while (glm::length(position - m_player.m_position) < PLAYER_MARGIN);
 
     asteroid.SetPosition(position);
-    asteroid.SetRotation(RandomVector(0.0F, M_2_PIf32));
+    asteroid.SetRotation(RandomVector(0.0F, std::numbers::pi_v<float> * 2.0F));
 
     glm::vec3 velocity_direction = glm::normalize(RandomVector(-1.0F, 1.0F));
     glm::vec3 angular_velocity_direction = glm::normalize(RandomVector(-1.0F, 1.0F));

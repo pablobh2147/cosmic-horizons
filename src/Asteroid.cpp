@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstdlib>
+#include <numbers>
 
 #include "Raycast.hpp"
 
@@ -20,11 +21,11 @@ void Asteroid::GenerateVertices(uint32_t vertex_count) noexcept {
     if (segments < 3) segments = 3;
 
     for (uint32_t ring = 0; ring < rings && m_vertices.size() < vertex_count; ++ring) {
-        float theta1 = static_cast<float>(ring) / static_cast<float>(rings) * M_PIf32;
-        float theta2 = static_cast<float>(ring + 1) / static_cast<float>(rings) * M_PIf32;
+        float theta1 = static_cast<float>(ring) / static_cast<float>(rings) * std::numbers::pi_v<float>;
+        float theta2 = static_cast<float>(ring + 1) / static_cast<float>(rings) * std::numbers::pi_v<float>;
 
         for (uint32_t seg = 0; seg < segments && m_vertices.size() < vertex_count; ++seg) {
-            float phi = static_cast<float>(seg) / static_cast<float>(segments) * 2.0F * M_PIf32;
+            float phi = static_cast<float>(seg) / static_cast<float>(segments) * 2.0F * std::numbers::pi_v<float>;
 
             // First vertex of the strip (current ring)
             float x1 = m_radius * std::sin(theta1) * std::cos(phi);
@@ -129,7 +130,7 @@ void Asteroid::ResolveBoundsCollision(glm::vec3 min, glm::vec3 max, float dampin
 }
 
 float Asteroid::GetMass() noexcept {
-    float volume = (4.0F / 3.0F) * M_PIf32 * m_radius * m_radius * m_radius;
+    float volume = (4.0F / 3.0F) * std::numbers::pi_v<float> * m_radius * m_radius * m_radius;
     return volume * DENSITY;
 }
 

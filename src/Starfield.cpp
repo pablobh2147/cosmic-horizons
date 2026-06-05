@@ -1,5 +1,7 @@
 #include "Starfield.hpp"
 
+#include <numbers>
+
 #include "Common.hpp"
 
 namespace cosmic {
@@ -19,7 +21,7 @@ void Starfield::Generate(uint32_t count) noexcept {
         star.position = RandomVector(-1.0F, 1.0F);
         star.color = STAR_COLORS[RandomInt(0, static_cast<int32_t>(STAR_COLORS.size()) - 1)];
         star.twinkle_speed = RandomFloat(MIN_TWINKLE_SPEED, MAX_TWINKLE_SPEED);
-        star.twinkle_phase = RandomFloat(0.0F, M_2_PIf32);
+        star.twinkle_phase = RandomFloat(0.0F, std::numbers::pi_v<float> * 2.0F);
         star.min_brightness = RandomFloat(MIN_BRIGHTNESS, MAX_BRIGHTNESS);
     }
 }
