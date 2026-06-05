@@ -56,7 +56,32 @@ cmake --build build
 ./build/CosmicHorizons
 ```
 
-> **Note:** Tested on Linux. Since the only external dependency is Raylib (included as a submodule), it should work on Windows and macOS as well.
+### Cross-Compilation for Windows (Linux)
+
+A convenience script is provided for cross-compiling the Windows executable from Linux using MinGW-w64:
+
+```bash
+# Build the Windows executable
+./build-windows.sh
+```
+
+**Prerequisites:** `mingw-w64` toolchain (`x86_64-w64-mingw32-gcc` / `x86_64-w64-mingw32-g++`).
+
+The Windows executable will be output to `build-windows/CosmicHorizons.exe`.
+
+## Packaging
+
+A `package.sh` script is included to generate distribution packages for both platforms. It copies the Linux and Windows executables (along with the `assets/` directory) into `package/linux/` and `package/windows/` respectively, then creates ZIP archives:
+
+```bash
+./package.sh
+```
+
+**Output:**
+- `package/CosmicHorizons-linux.zip`
+- `package/CosmicHorizons-windows.zip`
+
+> **Note:** The `package/` directory is gitignored.
 
 ## Dependencies
 
