@@ -40,10 +40,6 @@ void GameScene::Update() noexcept {
     ProcessPlayerAttack();
     m_particle_system.Update(GetFrameTime());
 
-    if (IsKeyPressed(KEY_R)) {
-        GenerateAsteroid();
-    }
-
     // Update asteroids
     for (Asteroid& asteroid : m_asteroids) {
         asteroid.Update(GetFrameTime());
