@@ -23,6 +23,7 @@ namespace cosmic {
 void GameScene::Initialize() noexcept {
     LoadAssets();
     m_starfield.Generate(STARFIELD_COUNT);
+    InitializeLevel(1);
 
     DisableCursor();
 }
@@ -48,6 +49,9 @@ void GameScene::Update() noexcept {
 
     // Remove destroyed asteroids
     std::erase_if(m_asteroids, [](const Asteroid& a) { return a.IsDestroyed(); });
+    if (IsLevelCleared()) {
+        AdvanceLevel();
+    }
 
     CheckCollisions();
 }
@@ -270,6 +274,10 @@ Asteroid* GameScene::GetClosestHitAsteroid(const Raycast& ray) noexcept {
     return hit_asteroid;
 }
 
+bool GameScene::IsLevelCleared() noexcept {
+    return m_asteroids.empty();
+}
+
 // ----------------------- Generation -----------------------
 
 void GameScene::GenerateAsteroid() noexcept {
@@ -285,6 +293,9 @@ void GameScene::GenerateAsteroid() noexcept {
     constexpr float MIN_ANGULAR_VELOCITY = 0.5F;
     constexpr float MAX_ANGULAR_VELOCITY = 2.0F;
 
+    constexpr float BOUNDARY_BUFFER = 0.8F;
+    constexpr float PLAYER_MARGIN = 5.0F;
+
     Asteroid& asteroid = m_asteroids.emplace_back();
     float base_radius = RandomFloat(MIN_RADIUS, MAX_RADIUS);
     uint32_t lives = static_cast<uint32_t>(base_radius * LIVES_PER_RADIUS) + 1;
@@ -294,7 +305,12 @@ void GameScene::GenerateAsteroid() noexcept {
     asteroid.SetLives(lives);
     asteroid.GenerateVertices(vertex_count);
 
-    asteroid.SetPosition(RandomVector(-BOUNDS_SIZE * 0.8F, BOUNDS_SIZE * 0.8F));
+    glm::vec3 position;
+    do {
+        position = RandomVector(-BOUNDS_SIZE * BOUNDARY_BUFFER, BOUNDS_SIZE * BOUNDARY_BUFFER);
+    } while (glm::length(position - m_player.m_position) < PLAYER_MARGIN);
+
+    asteroid.SetPosition(position);
     asteroid.SetRotation(RandomVector(0.0F, M_2_PIf32));
 
     glm::vec3 velocity_direction = glm::normalize(RandomVector(-1.0F, 1.0F));
@@ -302,6 +318,22 @@ void GameScene::GenerateAsteroid() noexcept {
 
     asteroid.SetVelocity(velocity_direction * RandomFloat(MIN_VELOCITY, MAX_VELOCITY));
     asteroid.SetAngularVelocity(angular_velocity_direction * RandomFloat(MIN_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY));
+}
+
+void GameScene::AdvanceLevel() noexcept {
+    m_statistics.level++;
+    InitializeLevel(m_statistics.level);
+}
+
+void GameScene::InitializeLevel(uint32_t level) noexcept {
+    constexpr uint32_t INITIAL_ASTEROIDS = 5;
+    constexpr uint32_t ASTEROIDS_PER_LEVEL = 3;
+
+    uint32_t asteroid_count = INITIAL_ASTEROIDS + level * ASTEROIDS_PER_LEVEL;
+
+    for (uint32_t i = 0; i < asteroid_count; ++i) {
+        GenerateAsteroid();
+    }
 }
 
 }  // namespace cosmic

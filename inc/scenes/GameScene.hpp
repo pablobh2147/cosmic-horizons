@@ -65,8 +65,12 @@ class GameScene : public Scene {
 
     void CheckCollisions() noexcept;
     Asteroid* GetClosestHitAsteroid(const Raycast& ray) noexcept;
+    bool IsLevelCleared() noexcept;
 
     void GenerateAsteroid() noexcept;
+
+    void AdvanceLevel() noexcept;
+    void InitializeLevel(uint32_t level) noexcept;
 
    private:
     // ------ Configuration ------
