@@ -81,8 +81,6 @@ void GameScene::DrawGUI() noexcept {
     DrawText(level_str.c_str(), GetScreenWidth() * 3 / 4 - MeasureText(level_str.c_str(), FONT_SIZE) / 2, 30, FONT_SIZE, WHITE);
     DrawText(asteroids_str.c_str(), GetScreenWidth() / 2 - MeasureText(asteroids_str.c_str(), FONT_SIZE) / 2, 30, FONT_SIZE, WHITE);
 
-    DrawText(std::format("Accuracy: {:.1f}%", m_statistics.GetAccuracy() * 100.0F).c_str(), 10, 70, 20, WHITE);
-
     // Draw lives as spaceship sprites
     for (int i = 0; i < m_player.lives; ++i) {
         constexpr int32_t TEXTURE_SCALE = 4;
