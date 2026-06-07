@@ -50,7 +50,7 @@
 
 ```bash
 # Clone with submodules
-git clone --recursive https://github.com/pablobh2147/cosmic-horizons.git
+git clone --recursive https://github.com/pablobh2147/Cosmic-Horizons.git
 cd cosmic-horizons
 
 # Configure and build
