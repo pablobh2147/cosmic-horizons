@@ -64,6 +64,7 @@ void GameScene::Render() noexcept {
     RenderAsteroids();
     m_particle_system.Render(m_projection * m_view);
 
+    DrawNearestAsteroidIndicator();
     DrawGUI();
     DrawCrosshair();
 }
@@ -104,6 +105,85 @@ void GameScene::DrawCrosshair() noexcept {
 
     DrawLine(center_x - CROSSHAIR_SIZE, center_y, center_x + CROSSHAIR_SIZE, center_y, CROSSHAIR_COLOR);
     DrawLine(center_x, center_y - CROSSHAIR_SIZE, center_x, center_y + CROSSHAIR_SIZE, CROSSHAIR_COLOR);
+}
+
+void GameScene::DrawNearestAsteroidIndicator() noexcept {
+    if (!ShouldShowNearestAsteroidIndicator()) {
+        return;
+    }
+
+    // Find the nearest asteroid by world-space distance.
+    const Asteroid* nearest_asteroid = nullptr;
+    float nearest_distance = std::numeric_limits<float>::max();
+    for (const Asteroid& asteroid : m_asteroids) {
+        float distance = glm::distance(asteroid.GetPosition(), m_player.m_position);
+        if (distance < nearest_distance) {
+            nearest_distance = distance;
+            nearest_asteroid = &asteroid;
+        }
+    }
+
+    if (nearest_asteroid == nullptr) {
+        return;
+    }
+
+    glm::mat4 view_projection = m_projection * m_view;
+
+    // Project the target onto the screen. If it is behind the camera, its
+    // projection is naturally mirrored; flip it through the center so the arrow
+    // points toward the edge the player should turn to.
+    glm::vec3 screen_pos = ProjectToScreen(nearest_asteroid->GetPosition(), view_projection);
+    if (screen_pos.z <= 0.0F) {
+        screen_pos.x = static_cast<float>(GetScreenWidth()) - screen_pos.x;
+        screen_pos.y = static_cast<float>(GetScreenHeight()) - screen_pos.y;
+    }
+
+    float center_x = static_cast<float>(GetScreenWidth()) * 0.5F;
+    float center_y = static_cast<float>(GetScreenHeight()) * 0.5F;
+
+    float dir_x = screen_pos.x - center_x;
+    float dir_y = screen_pos.y - center_y;
+    float length = std::sqrt(dir_x * dir_x + dir_y * dir_y);
+    if (length < 0.0001F) {
+        return;
+    }
+
+    dir_x /= length;
+    dir_y /= length;
+
+    // Clamp the arrow position to a screen edge with a small margin.
+    constexpr float MARGIN = 40.0F;
+    constexpr float ARROW_SIZE = 20.0F;
+
+    float half_width = center_x - MARGIN;
+    float half_height = center_y - MARGIN;
+    float scale = std::min(std::abs(half_width / dir_x), std::abs(half_height / dir_y));
+
+    float arrow_x = center_x + dir_x * scale;
+    float arrow_y = center_y + dir_y * scale;
+
+    float angle = std::atan2(dir_y, dir_x) * RAD2DEG;
+    DrawPoly({arrow_x, arrow_y}, 3, ARROW_SIZE, angle + 90.0F, RED);
+}
+
+bool GameScene::ShouldShowNearestAsteroidIndicator() noexcept {
+    if (m_asteroids.empty()) {
+        return false;
+    }
+
+    glm::mat4 view_projection = m_projection * m_view;
+
+    // If any asteroid is currently visible on screen, don't show the indicator.
+    for (const Asteroid& asteroid : m_asteroids) {
+        glm::vec3 screen_pos = ProjectToScreen(asteroid.GetPosition(), view_projection);
+        if (screen_pos.z > 0.0F &&
+            screen_pos.x >= 0.0F && screen_pos.x <= static_cast<float>(GetScreenWidth()) &&
+            screen_pos.y >= 0.0F && screen_pos.y <= static_cast<float>(GetScreenHeight())) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void GameScene::RenderAsteroids() noexcept {

@@ -40,6 +40,8 @@ class GameScene : public Scene {
    private:
     void DrawGUI() noexcept;
     void DrawCrosshair() noexcept;
+    void DrawNearestAsteroidIndicator() noexcept;
+    bool ShouldShowNearestAsteroidIndicator() noexcept;
     void RenderAsteroids() noexcept;
     void CalculateMatrices() noexcept;
 
